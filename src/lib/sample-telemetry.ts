@@ -1,4 +1,4 @@
-import { LunarLocation, SiteTelemetry, HorizonSamplePoint, VisibilityStatus } from "@/types/mission";
+import type { LunarLocation, SiteTelemetry, HorizonSamplePoint, VisibilityStatus } from "../types/mission.ts";
 
 // Deterministic generator for sample horizon profiles based on site coordinates
 export function getSampleHorizonProfile(location: LunarLocation): HorizonSamplePoint[] {

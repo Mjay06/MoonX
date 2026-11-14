@@ -1,4 +1,4 @@
-import { LunarLocation } from "@/types/mission";
+import type { LunarLocation } from "../types/mission.ts";
 
 export const SAMPLE_LUNAR_SITES: LunarLocation[] = [
   {
