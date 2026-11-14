@@ -336,6 +336,38 @@ export function TelemetryPanel({
             </dd>
           </div>
         </dl>
+
+        {/* Visual Sun Horizon Clearance Gauge */}
+        <div className="mt-2.5 pt-2 border-t border-amber-500/20">
+          <div className="flex justify-between font-mono text-[9px] text-amber-200/80 mb-1">
+            <span>Terrain Mask: {sun.horizonMaskDeg > 0 ? "+" : ""}{sun.horizonMaskDeg}°</span>
+            <span className={sun.visibility === "CLEAR" ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>
+              {sun.visibility === "CLEAR" ? `▲ ${sun.marginDeg > 0 ? "+" : ""}${sun.marginDeg}° Clear` : `▼ ${sun.marginDeg}° Blocked`}
+            </span>
+          </div>
+          <div className="relative h-2 w-full rounded bg-secondary/80 overflow-hidden flex border border-border/40">
+            {/* Terrain obstruction zone below horizon mask */}
+            <div
+              className="h-full bg-slate-700/60"
+              style={{ width: `${Math.min(100, Math.max(0, ((sun.horizonMaskDeg - (-2)) / 10) * 100))}%` }}
+              title={`Crater rim elevation: ${sun.horizonMaskDeg}°`}
+            />
+          </div>
+          <div className="relative mt-1 flex justify-between font-mono text-[8px] text-muted-foreground">
+            <span>-2°</span>
+            <span>0° Datum</span>
+            <span>+4°</span>
+            <span>+8°</span>
+            {/* Sun position marker */}
+            <span
+              className="absolute -top-3.5 -translate-x-1/2 text-xs"
+              style={{ left: `${Math.min(96, Math.max(4, ((sun.elevationDeg - (-2)) / 10) * 100))}%` }}
+              title={`Sun Elevation: ${sun.elevationDeg}°`}
+            >
+              ☀️
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* EARTH Telemetry Card */}
@@ -387,6 +419,38 @@ export function TelemetryPanel({
             </dd>
           </div>
         </dl>
+
+        {/* Visual Earth Horizon Clearance Gauge */}
+        <div className="mt-2.5 pt-2 border-t border-sky-500/20">
+          <div className="flex justify-between font-mono text-[9px] text-sky-200/80 mb-1">
+            <span>Terrain Mask: {earth.horizonMaskDeg > 0 ? "+" : ""}{earth.horizonMaskDeg}°</span>
+            <span className={earth.visibility === "CLEAR" ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>
+              {earth.visibility === "CLEAR" ? `▲ ${earth.marginDeg > 0 ? "+" : ""}${earth.marginDeg}° Clear` : `▼ ${earth.marginDeg}° Blocked`}
+            </span>
+          </div>
+          <div className="relative h-2 w-full rounded bg-secondary/80 overflow-hidden flex border border-border/40">
+            {/* Terrain obstruction zone below horizon mask */}
+            <div
+              className="h-full bg-slate-700/60"
+              style={{ width: `${Math.min(100, Math.max(0, ((earth.horizonMaskDeg - (-2)) / 10) * 100))}%` }}
+              title={`Crater rim elevation: ${earth.horizonMaskDeg}°`}
+            />
+          </div>
+          <div className="relative mt-1 flex justify-between font-mono text-[8px] text-muted-foreground">
+            <span>-2°</span>
+            <span>0° Datum</span>
+            <span>+4°</span>
+            <span>+8°</span>
+            {/* Earth position marker */}
+            <span
+              className="absolute -top-3.5 -translate-x-1/2 text-xs"
+              style={{ left: `${Math.min(96, Math.max(4, ((earth.elevationDeg - (-2)) / 10) * 100))}%` }}
+              title={`Earth Elevation: ${earth.elevationDeg}°`}
+            >
+              🌍
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Horizon profile button */}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { LunarLocation } from "@/types/mission";
+import { LunarLocation, SiteTelemetry } from "@/types/mission";
 import { SAMPLE_LUNAR_SITES } from "@/data/sample-sites";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +13,7 @@ interface LunarViewportProps {
   comparedLocations?: LunarLocation[];
   mapMode?: MapMode;
   onMapModeChange?: (mode: MapMode) => void;
+  telemetry?: SiteTelemetry | null;
 }
 
 // Major lunar south pole craters with realistic dimensions and depths (in km)
@@ -72,6 +73,7 @@ export function LunarViewport({
   comparedLocations = [],
   mapMode: controlledMode,
   onMapModeChange,
+  telemetry,
 }: LunarViewportProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [internalMode, setInternalMode] = useState<MapMode>("relief");
@@ -188,6 +190,18 @@ export function LunarViewport({
     const centerY = height / 2 + pan.y;
     const baseRadius = Math.max(10, Math.min(width, height) * 0.44 * zoom);
 
+    // Dynamic Sun and Earth positions derived from telemetry
+    const sunAzimuth = telemetry?.sun?.azimuthDeg ?? 45;
+    const sunElevation = telemetry?.sun?.elevationDeg ?? 1.5;
+    const isSunClear = telemetry?.sun?.visibility === "CLEAR";
+    const earthAzimuth = telemetry?.earth?.azimuthDeg ?? 40;
+    const earthElevation = telemetry?.earth?.elevationDeg ?? 5.2;
+    const isEarthClear = telemetry?.earth?.visibility === "CLEAR";
+
+    // Canvas angle in radians (0° azimuth is UP)
+    const sunRad = ((sunAzimuth - 90) * Math.PI) / 180;
+    const sunOppositeRad = sunRad + Math.PI;
+
     // Deep space background
     ctx.fillStyle = "#05070b";
     ctx.fillRect(0, 0, width, height);
@@ -217,7 +231,6 @@ export function LunarViewport({
 
     if (mapMode === "lola") {
       // NASA LOLA FALSE-COLOR ELEVATION TOPOGRAPHY
-      // Deep basins (purple/indigo) -> plains (teal/green) -> peaks (amber/crimson)
       const lolaGrad = ctx.createRadialGradient(
         centerX,
         centerY,
@@ -234,10 +247,10 @@ export function LunarViewport({
       ctx.fillStyle = lolaGrad;
       ctx.fillRect(centerX - baseRadius * 1.2, centerY - baseRadius * 1.2, baseRadius * 2.4, baseRadius * 2.4);
     } else {
-      // PHOTOREALISTIC SHADED REGOLITH RELIEF (Greyscale albedo + grazing sunlight)
+      // PHOTOREALISTIC SHADED REGOLITH RELIEF (Dynamic illumination from current Sun angle)
       const surfGrad = ctx.createRadialGradient(
-        centerX - baseRadius * 0.25,
-        centerY - baseRadius * 0.25,
+        centerX + Math.cos(sunRad) * baseRadius * 0.35,
+        centerY + Math.sin(sunRad) * baseRadius * 0.35,
         baseRadius * 0.05,
         centerX,
         centerY,
@@ -283,9 +296,9 @@ export function LunarViewport({
         ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
         ctx.fill();
 
-        // Illuminated rim crescent (grazing light from top-left)
+        // Illuminated rim crescent dynamically facing current Sun direction
         ctx.beginPath();
-        ctx.arc(pos.x, pos.y, r, Math.PI * 0.75, Math.PI * 1.75);
+        ctx.arc(pos.x, pos.y, r, sunRad - Math.PI * 0.5, sunRad + Math.PI * 0.5);
         ctx.strokeStyle = "rgba(220, 235, 255, 0.35)";
         ctx.lineWidth = 1;
         ctx.stroke();
@@ -308,10 +321,10 @@ export function LunarViewport({
           : "rgba(160, 185, 215, 0.08)";
       ctx.fill();
 
-      // 2. Terraced Crater Wall Gradient
+      // 2. Terraced Crater Wall Gradient oriented to dynamic Sun
       const craterGrad = ctx.createRadialGradient(
-        pos.x + r * 0.3,
-        pos.y + r * 0.3,
+        pos.x + Math.cos(sunOppositeRad) * r * 0.3,
+        pos.y + Math.sin(sunOppositeRad) * r * 0.3,
         Math.max(0.5, r * 0.08),
         pos.x,
         pos.y,
@@ -338,25 +351,25 @@ export function LunarViewport({
       // 3. Central Peak (for Amundsen)
       if (crater.centralPeak) {
         ctx.beginPath();
-        ctx.arc(pos.x - r * 0.1, pos.y - r * 0.1, r * 0.22, 0, Math.PI * 2);
+        ctx.arc(pos.x + Math.cos(sunRad) * r * 0.1, pos.y + Math.sin(sunRad) * r * 0.1, r * 0.22, 0, Math.PI * 2);
         ctx.fillStyle = mapMode === "lola" ? "#f59e0b" : "rgba(200, 225, 255, 0.55)";
         ctx.fill();
       }
 
-      // 4. Sunlit Rim Crest Crescent (High-contrast grazing illumination)
+      // 4. Sunlit Rim Crest Crescent (Dynamically oriented to current Sun angle)
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, r, Math.PI * 0.7, Math.PI * 1.85);
+      ctx.arc(pos.x, pos.y, r, sunRad - Math.PI * 0.55, sunRad + Math.PI * 0.55);
       ctx.strokeStyle =
         mapMode === "lola"
           ? "rgba(254, 240, 138, 0.9)"
-          : "rgba(235, 245, 255, 0.65)";
+          : "rgba(235, 245, 255, 0.75)";
       ctx.lineWidth = Math.max(1.2, r * 0.07);
       ctx.stroke();
 
       // 5. Shadowed Rim Wall
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, r, Math.PI * 1.85, Math.PI * 2.7);
-      ctx.strokeStyle = "rgba(4, 6, 9, 0.85)";
+      ctx.arc(pos.x, pos.y, r, sunOppositeRad - Math.PI * 0.55, sunOppositeRad + Math.PI * 0.55);
+      ctx.strokeStyle = "rgba(4, 6, 9, 0.9)";
       ctx.lineWidth = Math.max(1.2, r * 0.07);
       ctx.stroke();
 
@@ -389,17 +402,20 @@ export function LunarViewport({
       ctx.quadraticCurveTo(pPeak.x - 8, pPeak.y - 8, pEnd.x, pEnd.y);
       ctx.strokeStyle =
         mapMode === "lola"
-          ? "rgba(239, 68, 68, 0.85)" // High red elevation in LOLA
-          : "rgba(240, 248, 255, 0.75)"; // Sun-drenched mountain ridge
+          ? "rgba(239, 68, 68, 0.85)"
+          : "rgba(240, 248, 255, 0.8)";
       ctx.lineWidth = Math.max(3, 4 * zoom);
       ctx.lineCap = "round";
       ctx.stroke();
 
-      // Shadow Cast by the Mountain Peak
+      // Dynamic Mountain Shadow Cast in direction of sunOppositeRad
       ctx.beginPath();
       ctx.moveTo(pPeak.x, pPeak.y);
-      ctx.lineTo(pPeak.x + 18 * zoom, pPeak.y + 14 * zoom);
-      ctx.strokeStyle = "rgba(3, 5, 8, 0.75)";
+      ctx.lineTo(
+        pPeak.x + Math.cos(sunOppositeRad) * 22 * zoom,
+        pPeak.y + Math.sin(sunOppositeRad) * 22 * zoom
+      );
+      ctx.strokeStyle = "rgba(3, 5, 8, 0.8)";
       ctx.lineWidth = Math.max(2, 3 * zoom);
       ctx.stroke();
 
@@ -523,7 +539,7 @@ export function LunarViewport({
     });
 
     // -------------------------------------------------------------
-    // LAYER 8: SELECTED LOCATION TACTICAL RETICLE
+    // LAYER 8: SELECTED LOCATION TACTICAL RETICLE & SUN/EARTH VECTORS
     // -------------------------------------------------------------
     if (selectedLocation) {
       const pos = latLonToCanvas(
@@ -579,14 +595,108 @@ export function LunarViewport({
         pos.x + 20,
         pos.y + 12
       );
+
+      // -------------------------------------------------------------
+      // LAYER 8.5: DYNAMIC VISUAL SUN & EARTH SIGHTLINE VECTORS ON MAP
+      // -------------------------------------------------------------
+      // 1. SOLAR ILLUMINATION BEAM (Warm Gold Ray arriving from Sun Azimuth)
+      const sunBeamLen = Math.min(width, height) * 0.32;
+      const sunSourceX = pos.x + Math.cos(sunRad) * sunBeamLen;
+      const sunSourceY = pos.y + Math.sin(sunRad) * sunBeamLen;
+
+      const sunBeamGrad = ctx.createLinearGradient(sunSourceX, sunSourceY, pos.x, pos.y);
+      if (isSunClear) {
+        sunBeamGrad.addColorStop(0, "rgba(251, 191, 36, 0.9)");
+        sunBeamGrad.addColorStop(0.65, "rgba(251, 191, 36, 0.35)");
+        sunBeamGrad.addColorStop(1, "rgba(251, 191, 36, 0.0)");
+      } else {
+        sunBeamGrad.addColorStop(0, "rgba(244, 63, 94, 0.7)");
+        sunBeamGrad.addColorStop(0.65, "rgba(244, 63, 94, 0.2)");
+        sunBeamGrad.addColorStop(1, "rgba(244, 63, 94, 0.0)");
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(sunSourceX, sunSourceY);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = sunBeamGrad;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Glowing Sun Fixture Icon on map perimeter
+      ctx.beginPath();
+      ctx.arc(sunSourceX, sunSourceY, 7, 0, Math.PI * 2);
+      ctx.fillStyle = isSunClear ? "#fbbf24" : "#f43f5e";
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Sun Vector Label
+      ctx.fillStyle = isSunClear ? "#fef08a" : "#fecdd3";
+      ctx.font = "bold 9.5px var(--font-telemetry, monospace)";
+      ctx.textAlign = "center";
+      ctx.fillText(
+        `☀️ SUN (${sunAzimuth.toFixed(0)}°, ${sunElevation > 0 ? "+" : ""}${sunElevation.toFixed(1)}°)`,
+        sunSourceX,
+        sunSourceY - 11
+      );
+      ctx.font = "8px var(--font-telemetry, monospace)";
+      ctx.fillText(
+        isSunClear ? "CLEAR LOS" : "OCCULTED",
+        sunSourceX,
+        sunSourceY + 16
+      );
+
+      // 2. DIRECT-TO-EARTH LINK VECTOR (Cyan Laser Beam)
+      const earthRad = ((earthAzimuth - 90) * Math.PI) / 180;
+      const earthBeamLen = Math.min(width, height) * 0.28;
+      const earthTargetX = pos.x + Math.cos(earthRad) * earthBeamLen;
+      const earthTargetY = pos.y + Math.sin(earthRad) * earthBeamLen;
+
+      const earthBeamGrad = ctx.createLinearGradient(pos.x, pos.y, earthTargetX, earthTargetY);
+      if (isEarthClear) {
+        earthBeamGrad.addColorStop(0, "rgba(56, 189, 248, 0.0)");
+        earthBeamGrad.addColorStop(0.35, "rgba(56, 189, 248, 0.3)");
+        earthBeamGrad.addColorStop(1, "rgba(56, 189, 248, 0.9)");
+      } else {
+        earthBeamGrad.addColorStop(0, "rgba(244, 63, 94, 0.0)");
+        earthBeamGrad.addColorStop(0.35, "rgba(244, 63, 94, 0.15)");
+        earthBeamGrad.addColorStop(1, "rgba(244, 63, 94, 0.7)");
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      ctx.lineTo(earthTargetX, earthTargetY);
+      ctx.strokeStyle = earthBeamGrad;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Glowing Earth Icon
+      ctx.beginPath();
+      ctx.arc(earthTargetX, earthTargetY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = isEarthClear ? "#38bdf8" : "#f43f5e";
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Earth Vector Label
+      ctx.fillStyle = isEarthClear ? "#bae6fd" : "#fecdd3";
+      ctx.font = "bold 9.5px var(--font-telemetry, monospace)";
+      ctx.textAlign = "center";
+      ctx.fillText(
+        `🌍 EARTH (${earthAzimuth.toFixed(0)}°, ${earthElevation > 0 ? "+" : ""}${earthElevation.toFixed(1)}°)`,
+        earthTargetX,
+        earthTargetY - 10
+      );
     }
 
     // -------------------------------------------------------------
-    // LAYER 9: ORIENTATION COMPASS (Prime Meridian to Earth)
+    // LAYER 9: ORIENTATION COMPASS (Prime Meridian to Earth + Sun Needle)
     // -------------------------------------------------------------
     const compassX = width - 48;
     const compassY = 82;
-    const cRadius = 20;
+    const cRadius = 22;
 
     ctx.save();
     ctx.strokeStyle = "rgba(56, 189, 248, 0.35)";
@@ -595,6 +705,7 @@ export function LunarViewport({
     ctx.arc(compassX, compassY, cRadius, 0, Math.PI * 2);
     ctx.stroke();
 
+    // 0° Prime Meridian Indicator (Up)
     ctx.fillStyle = "rgba(56, 189, 248, 0.85)";
     ctx.beginPath();
     ctx.moveTo(compassX, compassY - cRadius - 3);
@@ -603,11 +714,24 @@ export function LunarViewport({
     ctx.closePath();
     ctx.fill();
 
+    // Sun Pointer Needle in Compass
+    ctx.strokeStyle = isSunClear ? "#fbbf24" : "#f43f5e";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(compassX, compassY);
+    ctx.lineTo(compassX + Math.cos(sunRad) * (cRadius - 2), compassY + Math.sin(sunRad) * (cRadius - 2));
+    ctx.stroke();
+
     ctx.font = "8px var(--font-telemetry, monospace)";
     ctx.textAlign = "center";
     ctx.fillStyle = "rgba(56, 189, 248, 0.85)";
     ctx.fillText("0° ME", compassX, compassY - cRadius - 5);
     ctx.fillText("EARTH", compassX, compassY + cRadius + 11);
+
+    // Sun badge in compass
+    ctx.fillStyle = isSunClear ? "#fbbf24" : "#f43f5e";
+    ctx.fillText("☀️", compassX + Math.cos(sunRad) * (cRadius + 10), compassY + Math.sin(sunRad) * (cRadius + 10) + 3);
+
     ctx.restore();
 
     ctx.restore();
@@ -621,6 +745,7 @@ export function LunarViewport({
     selectedLocation,
     comparedLocations,
     secondaryCraters,
+    telemetry,
     latLonToCanvas,
   ]);
 

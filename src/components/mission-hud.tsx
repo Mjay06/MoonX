@@ -222,6 +222,7 @@ export function MissionHud() {
           comparedLocations={scenarios.map((s) => s.location)}
           mapMode={mapMode}
           onMapModeChange={setMapMode}
+          telemetry={currentTelemetry}
         />
       </div>
 
