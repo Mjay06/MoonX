@@ -9,6 +9,7 @@ import { SiteSearchPanel } from "./site-search-panel";
 import { CandidateComparisonBar } from "./candidate-comparison-bar";
 import { TimeScrubberPanel } from "./time-scrubber-panel";
 import { TelemetryPanel } from "./telemetry-panel";
+import { HorizonPlotModal } from "./horizon-plot-modal";
 
 // Client-only dynamic mount for the lunar map viewport
 const LunarViewport = dynamic(
@@ -49,6 +50,7 @@ export function MissionHud() {
     "scenario-init-1"
   );
   const [timeOffsetHours, setTimeOffsetHours] = useState<number>(14.0);
+  const [isHorizonPlotOpen, setIsHorizonPlotOpen] = useState(false);
 
   // Derive current telemetry deterministically from active location & scrubbed time
   const currentTelemetry = useMemo(() => {
@@ -149,6 +151,7 @@ export function MissionHud() {
         {/* Right: Sun and Earth Telemetry Cards */}
         <TelemetryPanel
           telemetry={currentTelemetry}
+          onOpenHorizonPlot={() => setIsHorizonPlotOpen(true)}
         />
 
         {/* Bottom: Mission timeline scrubber */}
@@ -159,6 +162,15 @@ export function MissionHud() {
           onTimeChange={setTimeOffsetHours}
         />
       </div>
+
+      {/* 360° Horizon Profile & Celestial Sightlines Modal */}
+      {currentTelemetry && (
+        <HorizonPlotModal
+          telemetry={currentTelemetry}
+          isOpen={isHorizonPlotOpen}
+          onClose={() => setIsHorizonPlotOpen(false)}
+        />
+      )}
     </div>
   );
 }
