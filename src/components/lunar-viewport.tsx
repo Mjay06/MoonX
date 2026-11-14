@@ -48,9 +48,9 @@ export function LunarViewport({
       const centerY = height / 2 + pan.y;
       const baseRadius = Math.min(width, height) * 0.42 * zoom;
 
-      // Distance from south pole (-90)
-      const distFromPole = Math.max(0, -90 - lat); // -89 => 1 deg, -85 => 5 deg
-      const r = (distFromPole / 10.0) * baseRadius; // 10 degrees extent (-90 to -80)
+      // Distance from south pole (-90) in degrees (0° at -90°S, 10° at -80°S)
+      const distFromPole = Math.max(0, lat + 90);
+      const r = Math.max(0, (distFromPole / 10.0) * baseRadius);
 
       // Angle: 0° longitude points UP (towards Earth / Prime Meridian)
       const rad = ((lon - 90) * Math.PI) / 180;
@@ -116,7 +116,7 @@ export function LunarViewport({
 
     const centerX = width / 2 + pan.x;
     const centerY = height / 2 + pan.y;
-    const baseRadius = Math.min(width, height) * 0.42 * zoom;
+    const baseRadius = Math.max(10, Math.min(width, height) * 0.42 * zoom);
 
     // Draw deep lunar space background with soft stars
     ctx.fillStyle = "#07090e";
@@ -126,10 +126,10 @@ export function LunarViewport({
     const grad = ctx.createRadialGradient(
       centerX - baseRadius * 0.2,
       centerY - baseRadius * 0.2,
-      baseRadius * 0.05,
+      Math.max(1, baseRadius * 0.05),
       centerX,
       centerY,
-      baseRadius * 1.15
+      Math.max(2, baseRadius * 1.15)
     );
     grad.addColorStop(0, "#232832");
     grad.addColorStop(0.5, "#181c24");
@@ -156,16 +156,16 @@ export function LunarViewport({
 
     craters.forEach((crater) => {
       const pos = latLonToCanvas(crater.lat, crater.lon, width, height);
-      const r = (crater.radiusDeg / 10.0) * baseRadius;
+      const r = Math.max(1, (crater.radiusDeg / 10.0) * baseRadius);
 
       // Crater shadow gradient
       const cGrad = ctx.createRadialGradient(
         pos.x + r * 0.25,
         pos.y + r * 0.25,
-        r * 0.1,
+        Math.max(0.5, r * 0.1),
         pos.x,
         pos.y,
-        r
+        Math.max(1, r)
       );
       cGrad.addColorStop(0, "#080a0e");
       cGrad.addColorStop(0.65, "#0d1017");
@@ -198,7 +198,8 @@ export function LunarViewport({
       // Parallels: -89°, -88°, -86°, -84°, -82°, -80°
       const latGrid = [-89, -88, -86, -84, -82, -80];
       latGrid.forEach((gLat) => {
-        const r = ((-90 - gLat) / 10.0) * baseRadius;
+        const distFromPole = Math.max(0.1, gLat + 90);
+        const r = Math.max(1, (distFromPole / 10.0) * baseRadius);
         ctx.beginPath();
         ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
         ctx.stroke();
