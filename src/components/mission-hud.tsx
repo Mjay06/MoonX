@@ -10,6 +10,8 @@ import { CandidateComparisonBar } from "./candidate-comparison-bar";
 import { TimeScrubberPanel } from "./time-scrubber-panel";
 import { TelemetryPanel } from "./telemetry-panel";
 import { HorizonPlotModal } from "./horizon-plot-modal";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 // Client-only dynamic mount for the lunar map viewport
 const LunarViewport = dynamic(
@@ -126,10 +128,63 @@ export function MissionHud() {
         {announcement}
       </div>
 
+      {/* Top Mission HUD Navigation Bar */}
+      <header className="pointer-events-auto fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between border-b border-border/70 bg-card/85 px-4 backdrop-blur-md sm:px-6">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
+            </span>
+            <span className="font-mono text-sm font-bold tracking-wider text-foreground sm:text-base">
+              MOON<span className="text-primary">X</span>
+            </span>
+          </div>
+          <span className="hidden h-4 w-[1px] bg-border/80 sm:inline-block" />
+          <span className="hidden text-xs font-semibold tracking-wider text-muted-foreground uppercase sm:inline-block">
+            Lunar Landing Site Navigator
+          </span>
+          <Badge variant="illustrative" className="hidden md:inline-flex">
+            Artemis South Pole
+          </Badge>
+        </div>
+
+        {/* Center: Selected Site Readout */}
+        {selectedLocation && (
+          <div className="hidden items-center gap-2 lg:flex">
+            <span className="font-mono text-xs text-muted-foreground uppercase">Target:</span>
+            <span className="font-mono text-xs font-semibold text-foreground">
+              {selectedLocation.name}
+            </span>
+            <span className="font-mono text-[11px] text-primary">
+              ({selectedLocation.latitude.toFixed(2)}° S, {selectedLocation.longitude.toFixed(2)}° E)
+            </span>
+          </div>
+        )}
+
+        {/* Right: Quick Action Controls */}
+        <div className="flex items-center gap-2">
+          {currentTelemetry && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsHorizonPlotOpen(true)}
+              className="h-8 gap-1.5 text-xs font-mono border-primary/40 text-primary hover:bg-primary/10"
+            >
+              <span aria-hidden="true">📈</span>
+              <span className="hidden sm:inline">360° Horizon</span>
+            </Button>
+          )}
+          <div className="flex items-center rounded-md border border-border/60 bg-secondary/40 px-2 py-1 font-mono text-[11px] text-muted-foreground">
+            <span>IAU ME 2000</span>
+          </div>
+        </div>
+      </header>
+
       {/* Full-screen map viewport */}
       <div
         id="cesium-container"
-        className="fixed inset-0 z-0 bg-background"
+        className="fixed inset-0 z-0 bg-background pt-14"
         aria-label="Lunar surface 3D viewport"
       >
         <LunarViewport
@@ -142,26 +197,34 @@ export function MissionHud() {
       {/* Edge-anchored HUD workspace */}
       <div
         aria-label="Mission workspace"
-        className="pointer-events-none absolute inset-0 z-10"
+        className="pointer-events-none fixed inset-0 z-10 pt-14"
       >
-        {/* Top-left: Site search panel */}
-        <SiteSearchPanel
-          selectedLocation={selectedLocation}
-          onSelectLocation={handleSelectLocation}
-          onAddScenario={handleAddScenario}
-          comparisonCount={scenarios.length}
-          maxComparisons={3}
-        />
+        {/* Left HUD Dock: Site Search & Candidate Comparisons */}
+        <aside
+          aria-label="Site selection and scenario workspace"
+          className="pointer-events-none absolute left-4 top-16 bottom-36 sm:left-6 sm:top-16 sm:bottom-40 z-20 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3 overflow-y-auto pr-1 pb-2"
+        >
+          <div className="pointer-events-auto">
+            <SiteSearchPanel
+              selectedLocation={selectedLocation}
+              onSelectLocation={handleSelectLocation}
+              onAddScenario={handleAddScenario}
+              comparisonCount={scenarios.length}
+              maxComparisons={3}
+            />
+          </div>
 
-        {/* Top-left: Candidate scenario comparison list */}
-        <CandidateComparisonBar
-          scenarios={scenarios}
-          activeScenarioId={activeScenarioId}
-          onSelectScenario={handleSelectScenario}
-          onRemoveScenario={handleRemoveScenario}
-          onResetScenarios={handleResetScenarios}
-          maxScenarios={3}
-        />
+          <div className="pointer-events-auto">
+            <CandidateComparisonBar
+              scenarios={scenarios}
+              activeScenarioId={activeScenarioId}
+              onSelectScenario={handleSelectScenario}
+              onRemoveScenario={handleRemoveScenario}
+              onResetScenarios={handleResetScenarios}
+              maxScenarios={3}
+            />
+          </div>
+        </aside>
 
         {/* Right: Sun and Earth Telemetry Cards (Collapsible on mobile) */}
         <TelemetryPanel

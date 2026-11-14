@@ -22,19 +22,33 @@ export function CandidateComparisonBar({
   onResetScenarios,
   maxScenarios = 3,
 }: CandidateComparisonBarProps) {
-  if (scenarios.length === 0) return null;
+  if (scenarios.length === 0) {
+    return (
+      <div
+        aria-label="Candidate scenario comparison workspace"
+        className="relative w-full rounded-xl border border-dashed border-border/70 bg-card/60 p-3 text-center backdrop-blur-md"
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Scenario Comparison (0/{maxScenarios})
+        </p>
+        <p className="mt-1 text-[11px] text-muted-foreground/80 leading-relaxed">
+          Select a site and click <span className="text-primary font-mono">+ Compare</span> to evaluate multiple candidate landing scenarios side-by-side.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div
       aria-label="Candidate scenario comparison workspace"
-      className="pointer-events-auto absolute left-4 top-[24.5rem] z-20 w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-border/80 bg-card/90 p-3 shadow-xl backdrop-blur-glass transition-all sm:left-6"
+      className="relative w-full rounded-xl border border-border/70 bg-card/85 p-3.5 shadow-xl backdrop-blur-md transition-all"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Scenarios ({scenarios.length}/{maxScenarios})
           </h3>
-          <Badge variant="outline" className="text-[10px] font-mono py-0 px-1.5">
+          <Badge variant="outline" className="text-[10px] font-mono py-0 px-1.5 border-border/60">
             Client-Only
           </Badge>
         </div>

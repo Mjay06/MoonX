@@ -64,12 +64,12 @@ export function TelemetryPanel({
   // If collapsed on mobile screens, render a compact floating toggle pill
   if (isMobileCollapsed) {
     return (
-      <div className="pointer-events-auto absolute right-4 top-4 z-20 sm:hidden">
+      <div className="pointer-events-auto fixed right-4 top-16 z-30 sm:hidden">
         <Button
           variant="secondary"
           size="sm"
           onClick={onToggleMobileCollapse}
-          className="h-8 gap-1.5 border border-border/80 bg-card/90 px-3 text-xs font-mono shadow-lg backdrop-blur-glass"
+          className="h-8 gap-1.5 border border-border/80 bg-card/90 px-3 text-xs font-mono shadow-lg backdrop-blur-md"
           aria-expanded="false"
           aria-label="Expand site telemetry panel"
         >
@@ -91,7 +91,7 @@ export function TelemetryPanel({
     return (
       <section
         aria-labelledby="telemetry-heading"
-        className="pointer-events-auto absolute bottom-40 right-4 top-24 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-lg border border-border/80 bg-card/90 p-6 shadow-2xl backdrop-blur-glass sm:bottom-40 sm:right-6 sm:top-6"
+        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-xl border border-border/70 bg-card/85 p-6 shadow-2xl backdrop-blur-md sm:bottom-40 sm:right-6 sm:top-16"
       >
         <div className="flex items-center justify-between">
           <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -122,7 +122,7 @@ export function TelemetryPanel({
     return (
       <section
         aria-labelledby="telemetry-heading"
-        className="pointer-events-auto absolute bottom-40 right-4 top-24 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-lg border border-amber-500/40 bg-card/90 p-4 shadow-2xl backdrop-blur-glass sm:bottom-40 sm:right-6 sm:top-6"
+        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-xl border border-amber-500/40 bg-card/85 p-4 shadow-2xl backdrop-blur-md sm:bottom-40 sm:right-6 sm:top-16"
       >
         <div className="flex items-center justify-between border-b border-border/40 pb-2">
           <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
@@ -153,7 +153,7 @@ export function TelemetryPanel({
     return (
       <section
         aria-labelledby="telemetry-heading"
-        className="pointer-events-auto absolute bottom-40 right-4 top-24 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-lg border border-destructive/60 bg-card/90 p-4 shadow-2xl backdrop-blur-glass sm:bottom-40 sm:right-6 sm:top-6"
+        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-xl border border-destructive/60 bg-card/85 p-4 shadow-2xl backdrop-blur-md sm:bottom-40 sm:right-6 sm:top-16"
       >
         <div className="flex items-center justify-between border-b border-border/40 pb-2">
           <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-destructive">
@@ -184,7 +184,7 @@ export function TelemetryPanel({
     return (
       <section
         aria-labelledby="telemetry-heading"
-        className="pointer-events-auto absolute bottom-40 right-4 top-24 z-20 w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-lg border border-border/80 bg-card/90 p-4 shadow-2xl backdrop-blur-glass sm:bottom-40 sm:right-6 sm:top-6"
+        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border/70 bg-card/85 p-4 shadow-2xl backdrop-blur-md sm:bottom-40 sm:right-6 sm:top-16"
       >
         <div className="flex items-center justify-between">
           <h2
@@ -218,7 +218,7 @@ export function TelemetryPanel({
   return (
     <section
       aria-labelledby="telemetry-heading"
-      className="pointer-events-auto absolute bottom-40 right-4 top-24 z-20 w-[min(23rem,calc(100vw-2rem))] overflow-y-auto rounded-lg border border-border/80 bg-card/90 p-4 shadow-2xl backdrop-blur-glass sm:bottom-40 sm:right-6 sm:top-6"
+      className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border/70 bg-card/85 p-4 shadow-2xl backdrop-blur-md sm:bottom-40 sm:right-6 sm:top-16"
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/40 pb-2.5">

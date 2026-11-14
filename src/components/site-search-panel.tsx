@@ -72,7 +72,7 @@ export function SiteSearchPanel({
   return (
     <section
       aria-labelledby="site-search-heading"
-      className="pointer-events-auto absolute left-4 top-4 z-20 w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-border/80 bg-card/90 p-4 shadow-2xl backdrop-blur-glass transition-all sm:left-6 sm:top-6"
+      className="relative w-full rounded-xl border border-border/70 bg-card/85 p-4 shadow-xl backdrop-blur-md transition-all"
     >
       <div className="flex items-center justify-between">
         <h2
@@ -81,7 +81,7 @@ export function SiteSearchPanel({
         >
           Site Search & Candidates
         </h2>
-        <Badge variant="illustrative">Illustrative Sample Data</Badge>
+        <Badge variant="illustrative">Sample Data</Badge>
       </div>
 
       {/* Search Input */}
@@ -98,8 +98,8 @@ export function SiteSearchPanel({
           }}
           onFocus={() => setIsListExpanded(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Filter candidate sites by crater or lat/lon..."
-          className="pr-8 text-xs font-mono"
+          placeholder="Search crater or coordinates..."
+          className="pr-8 text-xs font-mono bg-secondary/40 border-border/60 focus-visible:border-primary"
           aria-autocomplete="list"
           aria-controls="candidate-sites-list"
           aria-expanded={isListExpanded}
@@ -117,6 +117,27 @@ export function SiteSearchPanel({
             ✕
           </button>
         )}
+      </div>
+
+      {/* Quick selection chips for prominent candidate locations */}
+      <div className="mt-2.5 flex flex-wrap gap-1">
+        {SAMPLE_LUNAR_SITES.slice(0, 5).map((s) => {
+          const isSelected = selectedLocation?.id === s.id;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onSelectLocation(s)}
+              className={`rounded-full px-2 py-0.5 text-[10px] font-mono transition-colors border ${
+                isSelected
+                  ? "bg-primary/20 border-primary text-primary font-semibold"
+                  : "bg-secondary/40 border-border/50 text-muted-foreground hover:text-foreground hover:bg-secondary/70"
+              }`}
+            >
+              {s.name.replace(" Crater Rim", "").replace(" Rim 1", "")}
+            </button>
+          );
+        })}
       </div>
 
       {/* Candidate Sites Dropdown / List */}

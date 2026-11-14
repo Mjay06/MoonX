@@ -122,6 +122,17 @@ export function LunarViewport({
     ctx.fillStyle = "#07090e";
     ctx.fillRect(0, 0, width, height);
 
+    // Subtle starfield
+    for (let i = 0; i < 52; i++) {
+      const sx = ((i * 173.3) % width);
+      const sy = ((i * 289.7) % height);
+      const sAlpha = 0.2 + ((i % 5) * 0.12);
+      ctx.fillStyle = `rgba(220, 235, 255, ${sAlpha})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, i % 3 === 0 ? 1.2 : 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     // Draw Lunar disk boundary
     const grad = ctx.createRadialGradient(
       centerX - baseRadius * 0.2,
@@ -180,9 +191,16 @@ export function LunarViewport({
       ctx.strokeStyle = "rgba(100, 120, 150, 0.25)";
       ctx.stroke();
 
+      // Crater illuminated rim crescent
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, r, Math.PI * 0.8, Math.PI * 1.8);
+      ctx.strokeStyle = "rgba(200, 225, 255, 0.4)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
       // Subtle crater name annotation
       if (zoom >= 1.2) {
-        ctx.fillStyle = "rgba(148, 163, 184, 0.45)";
+        ctx.fillStyle = "rgba(148, 163, 184, 0.55)";
         ctx.font = "9px var(--font-telemetry, monospace)";
         ctx.textAlign = "center";
         ctx.fillText(crater.name, pos.x, pos.y + r + 11);
@@ -324,6 +342,34 @@ export function LunarViewport({
       );
     }
 
+    // Compass rose in upper right corner of the canvas
+    const compassX = width - 48;
+    const compassY = 80;
+    const cRadius = 20;
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(compassX, compassY, cRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 0° Prime Meridian Arrow (Pointing Up towards Earth)
+    ctx.fillStyle = "rgba(56, 189, 248, 0.85)";
+    ctx.beginPath();
+    ctx.moveTo(compassX, compassY - cRadius - 3);
+    ctx.lineTo(compassX - 4, compassY - cRadius + 6);
+    ctx.lineTo(compassX + 4, compassY - cRadius + 6);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.font = "8px var(--font-telemetry, monospace)";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(56, 189, 248, 0.85)";
+    ctx.fillText("0° ME", compassX, compassY - cRadius - 5);
+    ctx.fillText("EARTH", compassX, compassY + cRadius + 11);
+    ctx.restore();
+
     ctx.restore();
   }, [
     isReady,
@@ -389,6 +435,12 @@ export function LunarViewport({
     }
   };
 
+  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.88;
+    setZoom((z) => Math.min(4.0, Math.max(0.6, z * zoomFactor)));
+  };
+
   const handleResetCamera = () => {
     setZoom(1.4);
     setPan({ x: 0, y: 0 });
@@ -422,13 +474,14 @@ export function LunarViewport({
         onClick={handleCanvasClick}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
+        onWheel={handleWheel}
         className="h-full w-full cursor-crosshair"
         aria-label="Interactive lunar south pole map. Click to inspect coordinates."
       />
 
       {/* Viewport Control Overlay (Bottom Left above time scrubber) */}
       <div className="pointer-events-auto absolute bottom-28 left-4 z-20 flex flex-col gap-1.5 sm:left-6">
-        <div className="flex items-center gap-1.5 rounded-md border border-border/70 bg-card/80 p-1 backdrop-blur-glass shadow-lg">
+        <div className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-card/85 p-1 backdrop-blur-md shadow-xl">
           <Button
             size="sm"
             variant="ghost"

@@ -59,7 +59,7 @@ export function TimeScrubberPanel({
   return (
     <section
       aria-labelledby="time-scrubber-heading"
-      className="pointer-events-auto absolute bottom-4 left-4 right-4 z-20 rounded-lg border border-border/80 bg-card/90 p-3 shadow-2xl backdrop-blur-glass sm:bottom-6 sm:left-6 sm:right-6"
+      className="pointer-events-auto absolute bottom-4 left-4 right-4 z-20 rounded-xl border border-border/70 bg-card/85 p-3 shadow-2xl backdrop-blur-md sm:bottom-6 sm:left-6 sm:right-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2">
         <div className="flex items-center gap-2">
