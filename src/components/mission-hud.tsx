@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { LunarLocation, CandidateScenario } from "@/types/mission";
 import { SAMPLE_LUNAR_SITES } from "@/data/sample-sites";
+import { calculateSampleTelemetry } from "@/lib/sample-telemetry";
 import { SiteSearchPanel } from "./site-search-panel";
 import { CandidateComparisonBar } from "./candidate-comparison-bar";
 import { TimeScrubberPanel } from "./time-scrubber-panel";
+import { TelemetryPanel } from "./telemetry-panel";
 
 // Client-only dynamic mount for the lunar map viewport
 const LunarViewport = dynamic(
@@ -47,6 +49,16 @@ export function MissionHud() {
     "scenario-init-1"
   );
   const [timeOffsetHours, setTimeOffsetHours] = useState<number>(14.0);
+
+  // Derive current telemetry deterministically from active location & scrubbed time
+  const currentTelemetry = useMemo(() => {
+    if (!selectedLocation) return null;
+    return calculateSampleTelemetry(
+      selectedLocation,
+      MISSION_BASE_TIME_UTC,
+      timeOffsetHours
+    );
+  }, [selectedLocation, timeOffsetHours]);
 
   const handleSelectLocation = (location: LunarLocation) => {
     setSelectedLocation(location);
@@ -134,21 +146,10 @@ export function MissionHud() {
           maxScenarios={3}
         />
 
-        {/* Right: Telemetry region placeholder */}
-        <section
-          aria-labelledby="telemetry-heading"
-          className="pointer-events-auto absolute bottom-40 right-4 top-24 w-[min(22rem,calc(100vw-2rem))] overflow-auto rounded-lg border border-border/80 bg-card/85 p-4 shadow-xl backdrop-blur-glass-strong sm:bottom-40 sm:right-6 sm:top-6"
-        >
-          <h2
-            id="telemetry-heading"
-            className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-          >
-            Telemetry
-          </h2>
-          <p className="mt-4 font-mono text-sm text-muted-foreground">
-            Awaiting site selection
-          </p>
-        </section>
+        {/* Right: Sun and Earth Telemetry Cards */}
+        <TelemetryPanel
+          telemetry={currentTelemetry}
+        />
 
         {/* Bottom: Mission timeline scrubber */}
         <TimeScrubberPanel
