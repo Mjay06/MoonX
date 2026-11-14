@@ -6,9 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
+export type TelemetryState = "ready" | "loading" | "empty" | "unavailable" | "error";
+
 interface TelemetryPanelProps {
   telemetry: SiteTelemetry | null;
+  state?: TelemetryState;
+  errorMessage?: string;
   onOpenHorizonPlot?: () => void;
+  isMobileCollapsed?: boolean;
+  onToggleMobileCollapse?: () => void;
 }
 
 function getStatusBadge(status: VisibilityStatus) {
@@ -16,21 +22,21 @@ function getStatusBadge(status: VisibilityStatus) {
     case "CLEAR":
       return (
         <Badge variant="success" className="text-[11px] gap-1">
-          <span>●</span>
+          <span aria-hidden="true">●</span>
           <span>CLEAR LOS</span>
         </Badge>
       );
     case "BLOCKED":
       return (
         <Badge variant="destructive" className="text-[11px] gap-1">
-          <span>✕</span>
+          <span aria-hidden="true">✕</span>
           <span>BLOCKED</span>
         </Badge>
       );
     case "GRAZING":
       return (
         <Badge variant="warning" className="text-[11px] gap-1">
-          <span>▲</span>
+          <span aria-hidden="true">▲</span>
           <span>GRAZING</span>
         </Badge>
       );
@@ -38,28 +44,165 @@ function getStatusBadge(status: VisibilityStatus) {
     default:
       return (
         <Badge variant="outline" className="text-[11px] gap-1 text-muted-foreground">
-          <span>?</span>
+          <span aria-hidden="true">?</span>
           <span>UNKNOWN</span>
         </Badge>
       );
   }
 }
 
-export function TelemetryPanel({ telemetry, onOpenHorizonPlot }: TelemetryPanelProps) {
+export function TelemetryPanel({
+  telemetry,
+  state = "ready",
+  errorMessage,
+  onOpenHorizonPlot,
+  isMobileCollapsed = false,
+  onToggleMobileCollapse,
+}: TelemetryPanelProps) {
   const [showAssumptions, setShowAssumptions] = useState(false);
 
-  if (!telemetry) {
+  // If collapsed on mobile screens, render a compact floating toggle pill
+  if (isMobileCollapsed) {
+    return (
+      <div className="pointer-events-auto absolute right-4 top-4 z-20 sm:hidden">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onToggleMobileCollapse}
+          className="h-8 gap-1.5 border border-border/80 bg-card/90 px-3 text-xs font-mono shadow-lg backdrop-blur-glass"
+          aria-expanded="false"
+          aria-label="Expand site telemetry panel"
+        >
+          <span>Telemetry</span>
+          {telemetry && (
+            <span
+              className={`h-2 w-2 rounded-full ${
+                telemetry.bothVisible ? "bg-emerald-400" : "bg-amber-400"
+              }`}
+            />
+          )}
+        </Button>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (state === "loading") {
+    return (
+      <section
+        aria-labelledby="telemetry-heading"
+        className="pointer-events-auto absolute bottom-40 right-4 top-24 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-lg border border-border/80 bg-card/90 p-6 shadow-2xl backdrop-blur-glass sm:bottom-40 sm:right-6 sm:top-6"
+      >
+        <div className="flex items-center justify-between">
+          <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Site Telemetry
+          </h2>
+          {onToggleMobileCollapse && (
+            <button
+              type="button"
+              onClick={onToggleMobileCollapse}
+              className="text-xs text-muted-foreground sm:hidden"
+            >
+              Hide
+            </button>
+          )}
+        </div>
+        <div className="mt-12 flex flex-col items-center justify-center text-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="mt-3 font-mono text-xs text-muted-foreground">
+            Calculating topocentric vectors...
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // Unavailable / insufficient coverage state
+  if (state === "unavailable") {
+    return (
+      <section
+        aria-labelledby="telemetry-heading"
+        className="pointer-events-auto absolute bottom-40 right-4 top-24 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-lg border border-amber-500/40 bg-card/90 p-4 shadow-2xl backdrop-blur-glass sm:bottom-40 sm:right-6 sm:top-6"
+      >
+        <div className="flex items-center justify-between border-b border-border/40 pb-2">
+          <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
+            Coverage Unavailable
+          </h2>
+          {onToggleMobileCollapse && (
+            <button
+              type="button"
+              onClick={onToggleMobileCollapse}
+              className="text-xs text-muted-foreground sm:hidden"
+            >
+              Hide
+            </button>
+          )}
+        </div>
+        <div className="mt-4 rounded bg-amber-950/30 p-3 text-xs text-amber-200/90 leading-relaxed">
+          <p className="font-semibold">Insufficient Topographic Data</p>
+          <p className="mt-1 text-[11px] opacity-80">
+            The target location falls outside verified high-resolution lunar south-pole DEM bounds. Visibility status classified as UNKNOWN.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // Error state
+  if (state === "error") {
+    return (
+      <section
+        aria-labelledby="telemetry-heading"
+        className="pointer-events-auto absolute bottom-40 right-4 top-24 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-lg border border-destructive/60 bg-card/90 p-4 shadow-2xl backdrop-blur-glass sm:bottom-40 sm:right-6 sm:top-6"
+      >
+        <div className="flex items-center justify-between border-b border-border/40 pb-2">
+          <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-destructive">
+            Telemetry Error
+          </h2>
+          {onToggleMobileCollapse && (
+            <button
+              type="button"
+              onClick={onToggleMobileCollapse}
+              className="text-xs text-muted-foreground sm:hidden"
+            >
+              Hide
+            </button>
+          )}
+        </div>
+        <div className="mt-4 rounded bg-destructive/15 p-3 text-xs text-rose-200 leading-relaxed">
+          <p className="font-semibold">Ephemeris Calculation Failed</p>
+          <p className="mt-1 text-[11px] opacity-80">
+            {errorMessage || "Unable to retrieve site ephemeris. Check network connectivity or time inputs."}
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // Empty state
+  if (!telemetry || state === "empty") {
     return (
       <section
         aria-labelledby="telemetry-heading"
         className="pointer-events-auto absolute bottom-40 right-4 top-24 z-20 w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-lg border border-border/80 bg-card/90 p-4 shadow-2xl backdrop-blur-glass sm:bottom-40 sm:right-6 sm:top-6"
       >
-        <h2
-          id="telemetry-heading"
-          className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-        >
-          Site Telemetry
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2
+            id="telemetry-heading"
+            className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+          >
+            Site Telemetry
+          </h2>
+          {onToggleMobileCollapse && (
+            <button
+              type="button"
+              onClick={onToggleMobileCollapse}
+              className="text-xs text-muted-foreground sm:hidden"
+            >
+              Hide
+            </button>
+          )}
+        </div>
         <div className="mt-8 text-center text-sm text-muted-foreground">
           <p className="font-mono text-xs">AWAITING LOCATION SELECTION</p>
           <p className="mt-1 text-xs opacity-70">
@@ -90,7 +233,19 @@ export function TelemetryPanel({ telemetry, onOpenHorizonPlot }: TelemetryPanelP
             {locationName}
           </p>
         </div>
-        <Badge variant="illustrative">Illustrative</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="illustrative">Illustrative</Badge>
+          {onToggleMobileCollapse && (
+            <button
+              type="button"
+              onClick={onToggleMobileCollapse}
+              className="text-xs text-muted-foreground hover:text-foreground sm:hidden"
+              aria-label="Collapse telemetry panel"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Epoch timestamp */}
@@ -110,7 +265,7 @@ export function TelemetryPanel({ telemetry, onOpenHorizonPlot }: TelemetryPanelP
         }`}
       >
         <div className="flex items-center gap-2">
-          <span className="text-base font-bold">
+          <span className="text-base font-bold" aria-hidden="true">
             {bothVisible ? "✓" : sun.visibility === "CLEAR" || earth.visibility === "CLEAR" ? "◐" : "✕"}
           </span>
           <div>
@@ -258,7 +413,7 @@ export function TelemetryPanel({ telemetry, onOpenHorizonPlot }: TelemetryPanelP
           className="flex w-full items-center justify-between text-[11px] font-mono text-muted-foreground hover:text-foreground"
         >
           <span>Model Assumptions & Limits</span>
-          <span>{showAssumptions ? "▲" : "▼"}</span>
+          <span aria-hidden="true">{showAssumptions ? "▲" : "▼"}</span>
         </button>
 
         {showAssumptions && (

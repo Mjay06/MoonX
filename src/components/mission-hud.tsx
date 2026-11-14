@@ -51,6 +51,8 @@ export function MissionHud() {
   );
   const [timeOffsetHours, setTimeOffsetHours] = useState<number>(14.0);
   const [isHorizonPlotOpen, setIsHorizonPlotOpen] = useState(false);
+  const [isMobileTelemetryCollapsed, setIsMobileTelemetryCollapsed] =
+    useState(false);
 
   // Derive current telemetry deterministically from active location & scrubbed time
   const currentTelemetry = useMemo(() => {
@@ -61,6 +63,14 @@ export function MissionHud() {
       timeOffsetHours
     );
   }, [selectedLocation, timeOffsetHours]);
+
+  // Screen-reader status announcement
+  const announcement = useMemo(() => {
+    if (!selectedLocation || !currentTelemetry) {
+      return "Mission HUD loaded. Awaiting site selection.";
+    }
+    return `Selected ${selectedLocation.name} at ${selectedLocation.latitude.toFixed(2)}° S, ${selectedLocation.longitude.toFixed(2)}° E. Mission time T+${timeOffsetHours.toFixed(1)} hours. Sun is ${currentTelemetry.sun.visibility}, Earth is ${currentTelemetry.earth.visibility}.`;
+  }, [selectedLocation, timeOffsetHours, currentTelemetry]);
 
   const handleSelectLocation = (location: LunarLocation) => {
     setSelectedLocation(location);
@@ -111,6 +121,11 @@ export function MissionHud() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden select-none">
+      {/* Screen reader live region for status announcements */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </div>
+
       {/* Full-screen map viewport */}
       <div
         id="cesium-container"
@@ -148,10 +163,15 @@ export function MissionHud() {
           maxScenarios={3}
         />
 
-        {/* Right: Sun and Earth Telemetry Cards */}
+        {/* Right: Sun and Earth Telemetry Cards (Collapsible on mobile) */}
         <TelemetryPanel
           telemetry={currentTelemetry}
+          state={currentTelemetry ? "ready" : "empty"}
           onOpenHorizonPlot={() => setIsHorizonPlotOpen(true)}
+          isMobileCollapsed={isMobileTelemetryCollapsed}
+          onToggleMobileCollapse={() =>
+            setIsMobileTelemetryCollapsed(!isMobileTelemetryCollapsed)
+          }
         />
 
         {/* Bottom: Mission timeline scrubber */}
