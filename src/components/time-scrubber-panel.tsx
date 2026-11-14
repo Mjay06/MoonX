@@ -130,14 +130,14 @@ export function TimeScrubberPanel({
   return (
     <section
       aria-labelledby="time-scrubber-heading"
-      className="pointer-events-auto absolute bottom-4 left-4 right-4 z-20 rounded-xl border border-border/70 bg-card/85 p-3.5 shadow-2xl backdrop-blur-md sm:bottom-6 sm:left-6 sm:right-6"
+      className="pointer-events-auto absolute bottom-4 left-4 right-4 z-20 rounded-md border border-white/20 bg-black/90 p-3.5 shadow-2xl backdrop-blur-xl sm:bottom-6 sm:left-6 sm:right-6"
     >
       {/* Header bar with UTC time, Elapsed Time, and View Toggle */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2">
         <div className="flex items-center gap-2">
           <h2
             id="time-scrubber-heading"
-            className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+            className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90"
           >
             Mission Timeline (UTC)
           </h2>
@@ -146,24 +146,24 @@ export function TimeScrubberPanel({
 
         <div className="flex items-center gap-3">
           {/* Dual Feasibility Summary Pill */}
-          <span className="hidden items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-950/50 px-2.5 py-0.5 font-mono text-[10px] text-emerald-300 md:inline-flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="hidden items-center gap-1.5 rounded-xs border border-[#00e5ff]/40 bg-[#00e5ff]/10 px-2.5 py-0.5 font-mono text-[10px] text-[#00e5ff] md:inline-flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#00e5ff] animate-pulse" />
             <span>Dual Feasible: {feasibilityProfile.feasibleHoursTotal}h / {durationHours}h ({feasibilityProfile.feasiblePct}%)</span>
           </span>
 
           {/* Mission Elapsed Time */}
-          <span className="font-mono text-xs font-semibold text-primary">
+          <span className="font-mono text-xs font-semibold text-[#00e5ff]">
             T+{timeOffsetHours.toFixed(1).padStart(4, "0")}h / {durationHours}h
           </span>
           {/* Current UTC timestamp */}
-          <span className="rounded bg-secondary/80 px-2 py-0.5 font-mono text-xs font-medium text-foreground">
+          <span className="rounded-xs border border-white/15 bg-white/10 px-2 py-0.5 font-mono text-xs font-medium text-white">
             {currentIsoUtc}
           </span>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setShowTableView((v) => !v)}
-            className="h-6 px-2 text-[11px] font-mono text-muted-foreground hover:text-foreground"
+            className="h-6 px-2 text-[11px] font-mono text-white/60 hover:text-white"
           >
             {showTableView ? "Hide Table" : "Table View"}
           </Button>
@@ -176,17 +176,17 @@ export function TimeScrubberPanel({
           <div className="relative mb-2 flex flex-col gap-1.5 text-[10px] font-mono">
             {/* Track 1: DUAL FEASIBLE WINDOW (Power + Comms Simultaneously) */}
             <div className="flex items-center gap-2">
-              <span className="w-16 shrink-0 font-semibold text-emerald-400 text-right">
+              <span className="w-16 shrink-0 font-semibold text-[#00e5ff] text-right">
                 Dual LOS:
               </span>
-              <div className="relative h-3 w-full rounded-sm bg-secondary/70 overflow-hidden flex border border-border/40">
+              <div className="relative h-3 w-full rounded-xs bg-black/80 overflow-hidden flex border border-white/20">
                 {feasibilityProfile.steps.map((s, idx) => (
                   <div
                     key={`dual-${idx}`}
                     style={{ width: `${100 / feasibilityProfile.steps.length}%` }}
                     className={`h-full ${
                       s.isBothClear
-                        ? "bg-emerald-400/90 shadow-[0_0_8px_rgba(52,211,153,0.5)]"
+                        ? "bg-[#00e5ff] shadow-[0_0_8px_rgba(0,229,255,0.7)]"
                         : "bg-slate-900/60"
                     }`}
                     title={`T+${s.hour}h: ${s.isBothClear ? "Concurrent Power & DTE Feasible" : "No Dual Coverage"}`}
@@ -200,7 +200,7 @@ export function TimeScrubberPanel({
               <span className="w-16 shrink-0 font-semibold text-amber-300 text-right">
                 Sun LOS:
               </span>
-              <div className="relative h-3 w-full rounded-sm bg-secondary/70 overflow-hidden flex border border-border/40">
+              <div className="relative h-3 w-full rounded-xs bg-black/80 overflow-hidden flex border border-white/20">
                 {feasibilityProfile.steps.map((s, idx) => (
                   <div
                     key={`sun-${idx}`}
@@ -219,7 +219,7 @@ export function TimeScrubberPanel({
               <span className="w-16 shrink-0 font-semibold text-sky-300 text-right">
                 Earth DTE:
               </span>
-              <div className="relative h-3 w-full rounded-sm bg-secondary/70 overflow-hidden flex border border-border/40">
+              <div className="relative h-3 w-full rounded-xs bg-black/80 overflow-hidden flex border border-white/20">
                 {feasibilityProfile.steps.map((s, idx) => (
                   <div
                     key={`earth-${idx}`}
@@ -235,7 +235,7 @@ export function TimeScrubberPanel({
 
             {/* Current Scrubbed Time Marker Line spanning all 3 tracks */}
             <div
-              className="pointer-events-none absolute top-0 bottom-0 w-[2px] bg-primary shadow-[0_0_6px_rgba(56,189,248,1)] z-10 transition-all duration-75"
+              className="pointer-events-none absolute top-0 bottom-0 w-[2px] bg-[#00e5ff] shadow-[0_0_8px_rgba(0,229,255,1)] z-10 transition-all duration-75"
               style={{
                 left: `calc(4.5rem + (100% - 4.5rem) * ${scrubProgressPct / 100})`,
               }}
@@ -256,7 +256,7 @@ export function TimeScrubberPanel({
           </div>
 
           {/* Timeline Axis Hour Ticks */}
-          <div className="flex justify-between pl-18 pr-1 font-mono text-[9px] text-muted-foreground mt-0.5">
+          <div className="flex justify-between pl-18 pr-1 font-mono text-[9px] text-white/50 mt-0.5">
             <span>T+0h</span>
             <span>T+6h</span>
             <span>T+12h</span>
@@ -277,7 +277,7 @@ export function TimeScrubberPanel({
                 size="sm"
                 onClick={() => handleStep(-6)}
                 title="Step backward 6 hours"
-                className="h-7 px-2 font-mono text-xs"
+                className="h-7 px-2 font-mono text-xs border-white/20 hover:border-[#00e5ff]"
               >
                 -6h
               </Button>
@@ -286,15 +286,15 @@ export function TimeScrubberPanel({
                 size="sm"
                 onClick={() => handleStep(-1)}
                 title="Step backward 1 hour"
-                className="h-7 px-2 font-mono text-xs"
+                className="h-7 px-2 font-mono text-xs border-white/20 hover:border-[#00e5ff]"
               >
                 -1h
               </Button>
               <Button
-                variant={isPlaying ? "destructive" : "accent"}
+                variant={isPlaying ? "destructive" : "default"}
                 size="sm"
                 onClick={() => setIsPlaying(!isPlaying)}
-                className="h-7 px-3 font-mono text-xs"
+                className="h-7 px-3 font-mono text-xs font-semibold"
               >
                 {isPlaying ? "⏸ Pause" : "▶ Play 48h"}
               </Button>
@@ -303,7 +303,7 @@ export function TimeScrubberPanel({
                 size="sm"
                 onClick={() => handleStep(1)}
                 title="Step forward 1 hour"
-                className="h-7 px-2 font-mono text-xs"
+                className="h-7 px-2 font-mono text-xs border-white/20 hover:border-[#00e5ff]"
               >
                 +1h
               </Button>
@@ -312,7 +312,7 @@ export function TimeScrubberPanel({
                 size="sm"
                 onClick={() => handleStep(6)}
                 title="Step forward 6 hours"
-                className="h-7 px-2 font-mono text-xs"
+                className="h-7 px-2 font-mono text-xs border-white/20 hover:border-[#00e5ff]"
               >
                 +6h
               </Button>
@@ -324,16 +324,16 @@ export function TimeScrubberPanel({
                   onTimeChange(0);
                 }}
                 title="Reset scrubber to mission start (T+0)"
-                className="h-7 px-2 font-mono text-xs text-muted-foreground hover:text-foreground"
+                className="h-7 px-2 font-mono text-xs text-white/60 hover:text-white"
               >
                 Reset T0
               </Button>
             </div>
 
             {/* Visual Legend */}
-            <div className="hidden flex-wrap items-center gap-3 font-mono text-[10px] text-muted-foreground sm:flex">
+            <div className="hidden flex-wrap items-center gap-3 font-mono text-[10px] text-white/60 sm:flex">
               <span className="flex items-center gap-1">
-                <span className="h-2 w-3 rounded-xs bg-emerald-400" />
+                <span className="h-2 w-3 rounded-xs bg-[#00e5ff]" />
                 <span>Dual LOS (Landing/EVA)</span>
               </span>
               <span className="flex items-center gap-1">
@@ -353,10 +353,10 @@ export function TimeScrubberPanel({
         </div>
       ) : (
         /* Accessible Tabular View of Intervals */
-        <div className="mt-3 max-h-56 overflow-y-auto rounded border border-border/60 bg-secondary/20 p-2 font-mono text-xs">
+        <div className="mt-3 max-h-56 overflow-y-auto rounded-xs border border-white/20 bg-black/90 p-2 font-mono text-xs">
           <table className="w-full text-left" aria-label="Tabular visibility timeline">
             <thead>
-              <tr className="border-b border-border/40 text-[10px] uppercase text-muted-foreground">
+              <tr className="border-b border-white/20 text-[10px] uppercase text-white/60">
                 <th className="py-1">Mission Interval</th>
                 <th className="py-1">Sun LOS</th>
                 <th className="py-1">Earth DTE</th>
@@ -368,14 +368,14 @@ export function TimeScrubberPanel({
               {intervals.map((item, idx) => (
                 <tr
                   key={idx}
-                  className="border-b border-border/20 text-xs hover:bg-secondary/40 transition-colors"
+                  className="border-b border-white/10 text-xs hover:bg-white/5 transition-colors"
                 >
-                  <td className="py-1.5 font-semibold text-foreground">
+                  <td className="py-1.5 font-semibold text-white">
                     T+{item.startH.toString().padStart(2, "0")}h – T+{item.endH.toString().padStart(2, "0")}h
                   </td>
                   <td className="py-1.5">
                     <span
-                      className={`rounded px-1.5 py-0.5 text-[10px] ${
+                      className={`rounded-xs px-1.5 py-0.5 text-[10px] ${
                         item.sun === "CLEAR"
                           ? "bg-amber-950/60 text-amber-300 border border-amber-600/40"
                           : "bg-rose-950/60 text-rose-300 border border-rose-800/40"
@@ -386,7 +386,7 @@ export function TimeScrubberPanel({
                   </td>
                   <td className="py-1.5">
                     <span
-                      className={`rounded px-1.5 py-0.5 text-[10px] ${
+                      className={`rounded-xs px-1.5 py-0.5 text-[10px] ${
                         item.earth === "CLEAR"
                           ? "bg-sky-950/60 text-sky-300 border border-sky-600/40"
                           : "bg-rose-950/60 text-rose-300 border border-rose-800/40"
@@ -399,10 +399,10 @@ export function TimeScrubberPanel({
                     <span
                       className={
                         item.joint.startsWith("FEASIBLE")
-                          ? "font-semibold text-emerald-300"
+                          ? "font-semibold text-[#00e5ff]"
                           : item.joint.startsWith("PARTIAL")
                             ? "text-sky-300"
-                            : "text-muted-foreground"
+                            : "text-white/50"
                       }
                     >
                       {item.joint}
@@ -415,7 +415,7 @@ export function TimeScrubberPanel({
                         onTimeChange(item.startH);
                         setShowTableView(false);
                       }}
-                      className="rounded bg-secondary/80 px-2 py-0.5 text-[10px] hover:bg-primary hover:text-primary-foreground transition-colors"
+                      className="rounded-xs border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] text-white hover:border-[#00e5ff] hover:text-[#00e5ff] transition-colors"
                     >
                       Jump to T+{item.startH}h
                     </button>

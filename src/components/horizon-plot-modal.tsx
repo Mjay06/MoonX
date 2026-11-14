@@ -57,42 +57,44 @@ export function HorizonPlotModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="horizon-plot-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
     >
-      <div className="relative w-full max-w-3xl rounded-xl border border-border/80 bg-card/95 p-5 shadow-2xl backdrop-blur-glass">
+      <div className="relative w-full max-w-3xl rounded-md border border-white/20 bg-black/95 p-6 shadow-[0_0_60px_rgba(0,0,0,0.95)]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border/40 pb-3">
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div>
             <div className="flex items-center gap-2">
               <h2
                 id="horizon-plot-title"
-                className="text-sm font-bold uppercase tracking-wider text-foreground"
+                className="text-sm font-bold uppercase tracking-[0.14em] text-white"
               >
                 360° Local Horizon Profile & Celestial Sightlines
               </h2>
-              <Badge variant="illustrative">Illustrative DEM</Badge>
+              <Badge variant="illustrative" className="border-white/20 bg-white/5 text-[#00e5ff] rounded-xs font-mono text-[9px]">
+                Illustrative DEM
+              </Badge>
             </div>
-            <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-              Site: <span className="text-foreground">{locationName}</span> | Epoch:{" "}
-              <span className="text-foreground">{timestampUtc}</span>
+            <p className="mt-0.5 font-mono text-xs text-white/60">
+              Site: <span className="text-white font-medium">{locationName}</span> | Epoch:{" "}
+              <span className="text-white font-medium">{timestampUtc}</span>
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="rounded-md border border-border/60 bg-secondary/50 p-0.5">
+            <div className="rounded-sm border border-white/20 bg-white/5 p-0.5 flex gap-0.5">
               <Button
-                variant={viewMode === "plot" ? "accent" : "ghost"}
+                variant={viewMode === "plot" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("plot")}
-                className="h-6 px-2 text-xs font-mono"
+                className="h-6 px-2 text-xs font-mono rounded-xs"
               >
                 Plot
               </Button>
               <Button
-                variant={viewMode === "table" ? "accent" : "ghost"}
+                variant={viewMode === "table" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("table")}
-                className="h-6 px-2 text-xs font-mono"
+                className="h-6 px-2 text-xs font-mono rounded-xs"
               >
                 Table
               </Button>
@@ -101,7 +103,7 @@ export function HorizonPlotModal({
               type="button"
               onClick={onClose}
               aria-label="Close horizon modal"
-              className="h-7 w-7 rounded-md border border-border/60 flex items-center justify-center text-muted-foreground hover:bg-secondary/80 hover:text-foreground text-sm"
+              className="h-7 w-7 rounded-sm border border-white/20 bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/70 hover:text-white text-xs transition-colors"
             >
               ✕
             </button>
@@ -111,7 +113,7 @@ export function HorizonPlotModal({
         {viewMode === "plot" ? (
           <div className="mt-4">
             {/* SVG Plot */}
-            <div className="overflow-hidden rounded-lg border border-border/60 bg-black/40 p-2">
+            <div className="overflow-hidden rounded-sm border border-white/15 bg-black/90 p-2">
               <svg
                 viewBox={`0 0 ${svgWidth} ${svgHeight}`}
                 className="w-full h-auto select-none"
@@ -272,9 +274,9 @@ export function HorizonPlotModal({
           </div>
         ) : (
           /* Accessible Horizon Data Table */
-          <div className="mt-4 max-h-72 overflow-y-auto rounded-lg border border-border/60">
+          <div className="mt-4 max-h-72 overflow-y-auto rounded-xs border border-white/20 bg-black/90">
             <table className="w-full text-left font-mono text-xs" aria-label="360-degree horizon profile samples">
-              <thead className="bg-secondary/80 text-[10px] text-muted-foreground uppercase sticky top-0">
+              <thead className="bg-black/95 text-[10px] text-white/60 uppercase sticky top-0 border-b border-white/20">
                 <tr>
                   <th className="p-2 pl-3">Azimuth (Deg)</th>
                   <th className="p-2">Cardinal Sector</th>
@@ -283,7 +285,7 @@ export function HorizonPlotModal({
                   <th className="p-2 pr-3">Earth Clearance</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/30 bg-card/60">
+              <tbody className="divide-y divide-white/10 bg-black/80">
                 {sortedProfile.map((pt) => {
                   const nearSun = Math.abs(pt.azimuthDeg - sun.azimuthDeg) <= 2.5;
                   const nearEarth = Math.abs(pt.azimuthDeg - earth.azimuthDeg) <= 2.5;
@@ -292,13 +294,13 @@ export function HorizonPlotModal({
                       key={pt.azimuthDeg}
                       className={
                         nearSun
-                          ? "bg-amber-950/20 font-semibold"
+                          ? "bg-amber-950/20 font-semibold text-white"
                           : nearEarth
-                            ? "bg-sky-950/20 font-semibold"
-                            : "text-muted-foreground hover:bg-secondary/30"
+                            ? "bg-sky-950/20 font-semibold text-white"
+                            : "text-white/70 hover:bg-white/5"
                       }
                     >
-                      <td className="p-2 pl-3 font-semibold text-foreground">
+                      <td className="p-2 pl-3 font-semibold text-white">
                         {pt.azimuthDeg}°
                       </td>
                       <td className="p-2">
@@ -312,7 +314,7 @@ export function HorizonPlotModal({
                                 ? "West"
                                 : `${pt.azimuthDeg}° Sector`}
                       </td>
-                      <td className="p-2 text-foreground">
+                      <td className="p-2 text-white">
                         {pt.elevationDeg > 0 ? "+" : ""}{pt.elevationDeg}°
                       </td>
                       <td className="p-2">
@@ -341,11 +343,11 @@ export function HorizonPlotModal({
           </div>
         )}
 
-        <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3">
-          <p className="text-[10px] text-muted-foreground">
+        <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
+          <p className="text-[10px] text-white/50">
             Calculations assume topocentric surface observer (+2m mast) on Moon Mean Earth / Polar Axis sphere.
           </p>
-          <Button variant="secondary" size="sm" onClick={onClose} className="h-7 px-3 text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="h-7 px-3 text-xs border-white/20 text-white hover:border-[#00e5ff] hover:text-[#00e5ff]">
             Close
           </Button>
         </div>

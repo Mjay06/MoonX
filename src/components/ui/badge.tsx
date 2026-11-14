@@ -14,18 +14,18 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const variantStyles: Record<NonNullable<BadgeProps["variant"]>, string> = {
   default:
-    "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+    "border-transparent bg-[#00e5ff] text-black font-semibold hover:bg-[#00e5ff]/80",
   secondary:
-    "border-border/60 bg-secondary text-secondary-foreground hover:bg-secondary/80",
-  outline: "text-foreground border-border",
+    "border-white/15 bg-white/10 text-white hover:bg-white/15",
+  outline: "text-white/80 border-white/20 bg-white/[0.03]",
   success:
-    "border-emerald-500/40 bg-emerald-950/80 text-emerald-300 font-medium",
+    "border-emerald-500/40 bg-emerald-950/70 text-emerald-300 font-medium",
   warning:
-    "border-amber-500/40 bg-amber-950/80 text-amber-300 font-medium",
+    "border-amber-500/40 bg-amber-950/70 text-amber-300 font-medium",
   destructive:
-    "border-rose-500/40 bg-rose-950/80 text-rose-300 font-medium",
+    "border-rose-500/40 bg-rose-950/70 text-rose-300 font-medium",
   illustrative:
-    "border-sky-500/30 bg-sky-950/60 text-sky-300 font-mono text-[10px] uppercase tracking-wider",
+    "border-white/20 bg-white/5 text-[#00e5ff] font-mono text-[9px] uppercase tracking-wider",
 };
 
 export function Badge({
@@ -36,7 +36,7 @@ export function Badge({
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold border transition-colors",
+        "inline-flex items-center rounded-xs px-2 py-0.5 text-[10px] font-mono border transition-colors",
         variantStyles[variant],
         className
       )}

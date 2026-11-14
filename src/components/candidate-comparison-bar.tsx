@@ -26,13 +26,13 @@ export function CandidateComparisonBar({
     return (
       <div
         aria-label="Candidate scenario comparison workspace"
-        className="relative w-full rounded-xl border border-dashed border-border/70 bg-card/60 p-3 text-center backdrop-blur-md"
+        className="relative w-full rounded-md border border-dashed border-white/20 bg-black/80 p-3 text-center backdrop-blur-xl"
       >
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">
           Scenario Comparison (0/{maxScenarios})
         </p>
-        <p className="mt-1 text-[11px] text-muted-foreground/80 leading-relaxed">
-          Select a site and click <span className="text-primary font-mono">+ Compare</span> to evaluate multiple candidate landing scenarios side-by-side.
+        <p className="mt-1 text-[11px] text-white/50 leading-relaxed">
+          Select a site and click <span className="text-[#00e5ff] font-mono">+ Compare</span> to evaluate multiple candidate landing scenarios side-by-side.
         </p>
       </div>
     );
@@ -41,14 +41,14 @@ export function CandidateComparisonBar({
   return (
     <div
       aria-label="Candidate scenario comparison workspace"
-      className="relative w-full rounded-xl border border-border/70 bg-card/85 p-3.5 shadow-xl backdrop-blur-md transition-all"
+      className="relative w-full rounded-md border border-white/20 bg-black/90 p-3.5 shadow-2xl backdrop-blur-xl transition-all"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-white/10 pb-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-white/90">
             Scenarios ({scenarios.length}/{maxScenarios})
           </h3>
-          <Badge variant="outline" className="text-[10px] font-mono py-0 px-1.5 border-border/60">
+          <Badge variant="outline" className="text-[10px] font-mono py-0 px-1.5 border-white/20 text-white/60">
             Client-Only
           </Badge>
         </div>
@@ -56,7 +56,7 @@ export function CandidateComparisonBar({
           variant="ghost"
           size="sm"
           onClick={onResetScenarios}
-          className="h-6 px-1.5 text-[11px] text-muted-foreground hover:text-destructive"
+          className="h-6 px-1.5 text-[11px] text-white/60 hover:text-red-400"
           title="Clear all compared scenarios"
         >
           Reset All
@@ -69,10 +69,10 @@ export function CandidateComparisonBar({
           return (
             <div
               key={scenario.id}
-              className={`flex items-center justify-between rounded-md border p-2 transition-colors ${
+              className={`flex items-center justify-between rounded-xs border p-2 transition-colors ${
                 isActive
-                  ? "border-primary/80 bg-primary/10 text-foreground"
-                  : "border-border/60 bg-secondary/30 text-muted-foreground hover:border-border hover:bg-secondary/50"
+                  ? "border-[#00e5ff] bg-[#00e5ff]/10 text-white"
+                  : "border-white/15 bg-white/[0.03] text-white/70 hover:border-white/30 hover:bg-white/[0.06]"
               }`}
             >
               <button
@@ -81,21 +81,21 @@ export function CandidateComparisonBar({
                 className="flex flex-1 items-center gap-2 text-left focus-visible:outline-none"
               >
                 <span
-                  className="h-2.5 w-2.5 rounded-full ring-2 ring-background shrink-0"
+                  className="h-2.5 w-2.5 rounded-full ring-2 ring-black shrink-0"
                   style={{ backgroundColor: scenario.color }}
                 />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-xs text-foreground truncate">
+                    <span className="font-semibold text-xs text-white truncate">
                       {index + 1}. {scenario.location.name}
                     </span>
                     {isActive && (
-                      <Badge variant="secondary" className="text-[9px] h-4 px-1 py-0 font-mono">
+                      <Badge variant="secondary" className="text-[9px] h-4 px-1 py-0 font-mono bg-[#00e5ff]/20 text-[#00e5ff] border-[#00e5ff]/40">
                         Active
                       </Badge>
                     )}
                   </div>
-                  <p className="font-mono text-[10px] text-muted-foreground truncate">
+                  <p className="font-mono text-[10px] text-white/60 truncate">
                     {scenario.location.latitude.toFixed(2)}° S, {scenario.location.longitude.toFixed(2)}° E
                   </p>
                 </div>
@@ -105,7 +105,7 @@ export function CandidateComparisonBar({
                 type="button"
                 onClick={() => onRemoveScenario(scenario.id)}
                 aria-label={`Remove scenario for ${scenario.location.name}`}
-                className="ml-2 h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:bg-destructive/20 hover:text-destructive text-xs"
+                className="ml-2 h-6 w-6 rounded-xs flex items-center justify-center text-white/50 hover:bg-red-500/20 hover:text-red-400 text-xs"
               >
                 ✕
               </button>
@@ -114,7 +114,7 @@ export function CandidateComparisonBar({
         })}
       </div>
 
-      <p className="mt-2 text-[10px] text-muted-foreground/80 leading-tight">
+      <p className="mt-2 text-[10px] text-white/50 leading-tight">
         Comparison shows relative geometry. Sites are illustrative sample records and not recommendations.
       </p>
     </div>

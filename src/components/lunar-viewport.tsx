@@ -839,19 +839,19 @@ export function LunarViewport({
 
       {/* LOLA Elevation Scale Legend (Visible in LOLA mode) */}
       {mapMode === "lola" && (
-        <div className="pointer-events-none absolute right-4 top-28 z-20 hidden flex-col items-end gap-1 rounded-lg border border-border/70 bg-card/85 p-2 backdrop-blur-md sm:flex">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+        <div className="pointer-events-none absolute right-4 top-28 z-20 hidden flex-col items-end gap-1 rounded-xs border border-white/20 bg-black/90 p-2 backdrop-blur-xl sm:flex">
+          <p className="font-mono text-[9px] uppercase tracking-wider text-white/60">
             LOLA Topo (m)
           </p>
           <div className="flex h-28 items-center gap-1.5 font-mono text-[9px]">
-            <div className="flex h-full flex-col justify-between text-right text-muted-foreground">
+            <div className="flex h-full flex-col justify-between text-right text-white/60">
               <span className="text-red-400 font-semibold">+6000m</span>
               <span className="text-amber-400">+2000m</span>
               <span className="text-teal-400">0m Datum</span>
               <span className="text-indigo-400">-2000m</span>
               <span className="text-slate-400 font-semibold">-4000m</span>
             </div>
-            <div className="h-full w-2.5 rounded-full bg-gradient-to-b from-red-500 via-amber-500 via-teal-500 to-indigo-950 border border-border/40" />
+            <div className="h-full w-2.5 rounded-full bg-gradient-to-b from-red-500 via-amber-500 via-teal-500 to-indigo-950 border border-white/20" />
           </div>
         </div>
       )}
@@ -859,45 +859,45 @@ export function LunarViewport({
       {/* Viewport Control Overlay (Bottom Left, placed to the right of the sidebar on desktop) */}
       <div className="pointer-events-auto absolute bottom-32 left-4 z-20 flex flex-col gap-1.5 sm:left-[25.5rem]">
         {/* Layer Mode Switcher & Camera Tools */}
-        <div className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-card/85 p-1 backdrop-blur-md shadow-xl">
+        <div className="flex items-center gap-1.5 rounded-xs border border-white/20 bg-black/90 p-1 backdrop-blur-xl shadow-2xl">
           <Button
             size="sm"
-            variant={mapMode === "relief" ? "accent" : "ghost"}
+            variant={mapMode === "relief" ? "default" : "ghost"}
             onClick={() => setMapMode("relief")}
             aria-label="Photorealistic Shaded Relief Surface"
             title="Photorealistic Shaded Relief"
-            className="h-7 px-2 text-[11px] font-mono"
+            className="h-7 px-2 text-[11px] font-mono rounded-xs"
           >
             Relief
           </Button>
           <Button
             size="sm"
-            variant={mapMode === "lola" ? "accent" : "ghost"}
+            variant={mapMode === "lola" ? "default" : "ghost"}
             onClick={() => setMapMode("lola")}
             aria-label="NASA LOLA Topographic Elevation Heatmap"
             title="NASA LOLA Topography"
-            className="h-7 px-2 text-[11px] font-mono"
+            className="h-7 px-2 text-[11px] font-mono rounded-xs"
           >
             LOLA Topo
           </Button>
           <Button
             size="sm"
-            variant={mapMode === "contours" ? "accent" : "ghost"}
+            variant={mapMode === "contours" ? "default" : "ghost"}
             onClick={() => setMapMode("contours")}
             aria-label="Topographic elevation contours"
             title="Elevation Contours"
-            className="h-7 px-2 text-[11px] font-mono"
+            className="h-7 px-2 text-[11px] font-mono rounded-xs"
           >
             Contours
           </Button>
-          <div className="h-4 w-[1px] bg-border/80" />
+          <div className="h-4 w-[1px] bg-white/20" />
           <Button
             size="sm"
             variant="ghost"
             onClick={() => setZoom((z) => Math.min(4.5, z + 0.3))}
             aria-label="Zoom in"
             title="Zoom in"
-            className="h-7 w-7 p-0 text-xs font-mono"
+            className="h-7 w-7 p-0 text-xs font-mono rounded-xs text-white/70 hover:text-white"
           >
             +
           </Button>
@@ -907,7 +907,7 @@ export function LunarViewport({
             onClick={() => setZoom((z) => Math.max(0.6, z - 0.3))}
             aria-label="Zoom out"
             title="Zoom out"
-            className="h-7 w-7 p-0 text-xs font-mono"
+            className="h-7 w-7 p-0 text-xs font-mono rounded-xs text-white/70 hover:text-white"
           >
             −
           </Button>
@@ -917,42 +917,42 @@ export function LunarViewport({
             onClick={handleResetCamera}
             aria-label="Reset top-down south pole camera"
             title="Reset south pole camera"
-            className="h-7 px-2 text-[11px] font-mono"
+            className="h-7 px-2 text-[11px] font-mono rounded-xs text-white/70 hover:text-white"
           >
             Reset
           </Button>
           <Button
             size="sm"
-            variant={showGrid ? "accent" : "ghost"}
+            variant={showGrid ? "default" : "ghost"}
             onClick={() => setShowGrid((g) => !g)}
             aria-label="Toggle polar coordinate grid"
             title="Toggle polar grid"
-            className="h-7 px-2 text-[11px] font-mono"
+            className="h-7 px-2 text-[11px] font-mono rounded-xs"
           >
             Grid
           </Button>
           <Button
             size="sm"
-            variant={showLabels ? "accent" : "ghost"}
+            variant={showLabels ? "default" : "ghost"}
             onClick={() => setShowLabels((l) => !l)}
             aria-label="Toggle crater and massif labels"
             title="Toggle labels"
-            className="h-7 px-2 text-[11px] font-mono"
+            className="h-7 px-2 text-[11px] font-mono rounded-xs"
           >
             Labels
           </Button>
         </div>
 
         {/* Attribution & Layer Info Badge */}
-        <div className="max-w-xs rounded border border-border/50 bg-card/75 p-1.5 text-[10px] leading-tight text-muted-foreground backdrop-blur-md">
-          <p className="font-semibold text-foreground/80">
+        <div className="max-w-xs rounded-xs border border-white/15 bg-black/85 p-1.5 text-[10px] leading-tight text-white/60 backdrop-blur-xl">
+          <p className="font-semibold text-white/90">
             {mapMode === "lola"
               ? "NASA LOLA South Polar Digital Elevation Model (DEM)"
               : mapMode === "contours"
                 ? "Topographic Elevation Contours (500m Intervals)"
                 : "NASA LRO / LOLA Shaded Relief Topography"}
           </p>
-          <p className="mt-0.5 opacity-80">
+          <p className="mt-0.5 text-white/50">
             Attribution: NASA / GSFC / ASU / JPL Trek. IAU Mean Earth frame (80°S-90°S). Contextual basemap layer.
           </p>
         </div>

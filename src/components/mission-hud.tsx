@@ -131,19 +131,19 @@ export function MissionHud() {
       </div>
 
       {/* Top Mission HUD Navigation Bar */}
-      <header className="pointer-events-auto fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between border-b border-border/70 bg-card/85 px-4 backdrop-blur-md sm:px-6">
+      <header className="pointer-events-auto fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between border-b border-white/15 bg-black/90 px-4 backdrop-blur-xl sm:px-6">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00e5ff] opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#00e5ff]" />
             </span>
-            <span className="font-mono text-sm font-bold tracking-wider text-foreground sm:text-base">
-              MOON<span className="text-primary">X</span>
+            <span className="font-mono text-sm font-bold tracking-wider text-white sm:text-base">
+              MOON<span className="text-[#00e5ff]">X</span>
             </span>
           </div>
-          <span className="hidden h-4 w-[1px] bg-border/80 sm:inline-block" />
-          <span className="hidden text-xs font-semibold tracking-wider text-muted-foreground uppercase lg:inline-block">
+          <span className="hidden h-4 w-[1px] bg-white/20 sm:inline-block" />
+          <span className="hidden text-xs font-semibold tracking-wider text-white/70 uppercase lg:inline-block">
             Lunar Landing Site Navigator
           </span>
           <Badge variant="illustrative" className="hidden xl:inline-flex">
@@ -152,17 +152,17 @@ export function MissionHud() {
         </div>
 
         {/* Center: Layer View Switcher (Relief | LOLA Topo | Contours) */}
-        <div className="flex items-center gap-1 rounded-lg border border-border/70 bg-secondary/60 p-1 font-mono text-xs shadow-inner">
-          <span className="hidden px-1.5 text-[10px] uppercase tracking-wider text-muted-foreground sm:inline-block">
+        <div className="flex items-center gap-1 rounded-xs border border-white/20 bg-black/80 p-0.5 font-mono text-xs shadow-inner">
+          <span className="hidden px-1.5 text-[10px] uppercase tracking-wider text-white/60 sm:inline-block">
             Layer:
           </span>
           <button
             type="button"
             onClick={() => setMapMode("relief")}
-            className={`rounded px-2.5 py-1 text-xs font-medium transition-all ${
+            className={`rounded-xs px-2.5 py-1 text-xs font-medium transition-all ${
               mapMode === "relief"
-                ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
+                ? "bg-[#00e5ff] text-black font-semibold shadow-sm"
+                : "text-white/60 hover:text-white hover:bg-white/10"
             }`}
           >
             Relief
@@ -170,10 +170,10 @@ export function MissionHud() {
           <button
             type="button"
             onClick={() => setMapMode("lola")}
-            className={`rounded px-2.5 py-1 text-xs font-medium transition-all ${
+            className={`rounded-xs px-2.5 py-1 text-xs font-medium transition-all ${
               mapMode === "lola"
-                ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
+                ? "bg-[#00e5ff] text-black font-semibold shadow-sm"
+                : "text-white/60 hover:text-white hover:bg-white/10"
             }`}
           >
             LOLA Topo
@@ -181,10 +181,10 @@ export function MissionHud() {
           <button
             type="button"
             onClick={() => setMapMode("contours")}
-            className={`rounded px-2.5 py-1 text-xs font-medium transition-all ${
+            className={`rounded-xs px-2.5 py-1 text-xs font-medium transition-all ${
               mapMode === "contours"
-                ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
+                ? "bg-[#00e5ff] text-black font-semibold shadow-sm"
+                : "text-white/60 hover:text-white hover:bg-white/10"
             }`}
           >
             Contours
@@ -198,13 +198,13 @@ export function MissionHud() {
               variant="outline"
               size="sm"
               onClick={() => setIsHorizonPlotOpen(true)}
-              className="h-8 gap-1.5 text-xs font-mono border-primary/40 text-primary hover:bg-primary/10"
+              className="h-8 gap-1.5 text-xs font-mono border-white/20 text-[#00e5ff] hover:bg-[#00e5ff]/10"
             >
               <span aria-hidden="true">📈</span>
               <span className="hidden sm:inline">360° Horizon</span>
             </Button>
           )}
-          <div className="hidden items-center rounded-md border border-border/60 bg-secondary/40 px-2 py-1 font-mono text-[11px] text-muted-foreground sm:flex">
+          <div className="hidden items-center rounded-xs border border-white/15 bg-white/5 px-2 py-1 font-mono text-[11px] text-white/60 sm:flex">
             <span>IAU ME 2000</span>
           </div>
         </div>

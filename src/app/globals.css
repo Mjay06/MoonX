@@ -3,43 +3,43 @@
 
 :root {
   color-scheme: dark;
-  --background: oklch(0.13 0.015 250);
-  --foreground: oklch(0.94 0.012 235);
-  --card: oklch(0.17 0.018 250);
-  --card-foreground: oklch(0.94 0.012 235);
-  --popover: oklch(0.16 0.018 250);
-  --popover-foreground: oklch(0.94 0.012 235);
-  --primary: oklch(0.82 0.14 205);
-  --primary-foreground: oklch(0.16 0.025 235);
-  --secondary: oklch(0.22 0.022 245);
-  --secondary-foreground: oklch(0.88 0.018 230);
-  --muted: oklch(0.2 0.018 245);
-  --muted-foreground: oklch(0.7 0.025 235);
-  --accent: oklch(0.25 0.055 215);
-  --accent-foreground: oklch(0.87 0.12 205);
-  --destructive: oklch(0.65 0.2 25);
-  --border: oklch(0.31 0.025 240);
-  --input: oklch(0.26 0.022 242);
-  --ring: oklch(0.78 0.14 205);
-  --chart-1: oklch(0.78 0.15 205);
-  --chart-2: oklch(0.76 0.13 150);
-  --chart-3: oklch(0.78 0.14 75);
-  --chart-4: oklch(0.7 0.16 285);
-  --chart-5: oklch(0.72 0.18 35);
-  --sidebar: oklch(0.15 0.018 248);
-  --sidebar-foreground: oklch(0.91 0.014 235);
-  --sidebar-primary: oklch(0.82 0.14 205);
-  --sidebar-primary-foreground: oklch(0.16 0.025 235);
-  --sidebar-accent: oklch(0.23 0.04 220);
-  --sidebar-accent-foreground: oklch(0.87 0.12 205);
-  --sidebar-border: oklch(0.29 0.024 240);
-  --sidebar-ring: oklch(0.78 0.14 205);
-  --radius: 0.5rem;
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #080808;
+  --card-foreground: #ffffff;
+  --popover: #0a0a0a;
+  --popover-foreground: #ffffff;
+  --primary: #00e5ff;
+  --primary-foreground: #000000;
+  --secondary: #141414;
+  --secondary-foreground: #f3f4f6;
+  --muted: #121212;
+  --muted-foreground: #9ca3af;
+  --accent: #181818;
+  --accent-foreground: #00e5ff;
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.16);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #00e5ff;
+  --chart-1: #00e5ff;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #a855f7;
+  --chart-5: #ec4899;
+  --sidebar: #050505;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #00e5ff;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #141414;
+  --sidebar-accent-foreground: #00e5ff;
+  --sidebar-border: rgba(255, 255, 255, 0.14);
+  --sidebar-ring: #00e5ff;
+  --radius: 0.375rem;
   --font-geometric:
-    "Avenir Next", Montserrat, "Century Gothic", ui-sans-serif, system-ui,
+    var(--font-titillium), "Titillium Web", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;
   --font-telemetry:
-    "IBM Plex Mono", "SFMono-Regular", Consolas, ui-monospace, monospace;
+    var(--font-jetbrains), "JetBrains Mono", "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
 }
 
 @theme inline {

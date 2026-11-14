@@ -72,12 +72,12 @@ export function SiteSearchPanel({
   return (
     <section
       aria-labelledby="site-search-heading"
-      className="relative w-full rounded-xl border border-border/70 bg-card/85 p-4 shadow-xl backdrop-blur-md transition-all"
+      className="relative w-full rounded-md border border-white/20 bg-black/90 p-4 shadow-2xl backdrop-blur-xl transition-all"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
         <h2
           id="site-search-heading"
-          className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+          className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90"
         >
           Site Search & Candidates
         </h2>
@@ -99,7 +99,7 @@ export function SiteSearchPanel({
           onFocus={() => setIsListExpanded(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search crater or coordinates..."
-          className="pr-8 text-xs font-mono bg-secondary/40 border-border/60 focus-visible:border-primary"
+          className="pr-8 text-xs font-mono bg-black/70 border-white/20 focus-visible:border-[#00e5ff]"
           aria-autocomplete="list"
           aria-controls="candidate-sites-list"
           aria-expanded={isListExpanded}
@@ -112,7 +112,7 @@ export function SiteSearchPanel({
               setIsListExpanded(false);
             }}
             aria-label="Clear search text"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/50 hover:text-white text-xs"
           >
             ✕
           </button>
@@ -128,10 +128,10 @@ export function SiteSearchPanel({
               key={s.id}
               type="button"
               onClick={() => onSelectLocation(s)}
-              className={`rounded-full px-2 py-0.5 text-[10px] font-mono transition-colors border ${
+              className={`rounded-xs px-2 py-0.5 text-[10px] font-mono transition-colors border ${
                 isSelected
-                  ? "bg-primary/20 border-primary text-primary font-semibold"
-                  : "bg-secondary/40 border-border/50 text-muted-foreground hover:text-foreground hover:bg-secondary/70"
+                  ? "bg-[#00e5ff]/20 border-[#00e5ff] text-[#00e5ff] font-semibold"
+                  : "bg-white/5 border-white/15 text-white/70 hover:text-white hover:bg-white/15"
               }`}
             >
               {s.name.replace(" Crater Rim", "").replace(" Rim 1", "")}
@@ -142,9 +142,9 @@ export function SiteSearchPanel({
 
       {/* Candidate Sites Dropdown / List */}
       {isListExpanded && (
-        <div className="mt-2 max-h-52 overflow-y-auto rounded-md border border-border/70 bg-background/95 p-1 shadow-lg">
+        <div className="mt-2 max-h-52 overflow-y-auto rounded-md border border-white/20 bg-black/95 p-1 shadow-2xl">
           {filteredSites.length === 0 ? (
-            <div className="p-3 text-center text-xs text-muted-foreground">
+            <div className="p-3 text-center text-xs text-white/60">
               <p>No sample locations match &ldquo;{query}&rdquo;.</p>
               <Button
                 variant="ghost"
@@ -175,21 +175,21 @@ export function SiteSearchPanel({
                       setIsListExpanded(false);
                     }}
                     onMouseEnter={() => setHighlightedIndex(index)}
-                    className={`cursor-pointer rounded px-2.5 py-1.5 text-xs transition-colors ${
+                    className={`cursor-pointer rounded-xs px-2.5 py-1.5 text-xs transition-colors ${
                       isHighlighted
-                        ? "bg-accent text-accent-foreground"
+                        ? "bg-[#00e5ff]/20 text-[#00e5ff] border border-[#00e5ff]/30"
                         : isSelected
-                          ? "bg-secondary/70 text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
+                          ? "bg-white/10 text-white font-semibold"
+                          : "text-white/70 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     <div className="flex items-center justify-between font-medium">
-                      <span className="text-foreground">{site.name}</span>
-                      <span className="font-mono text-[10px] opacity-75">
+                      <span className="text-white">{site.name}</span>
+                      <span className="font-mono text-[10px] text-white/60">
                         {site.latitude.toFixed(2)}° S, {site.longitude.toFixed(2)}° E
                       </span>
                     </div>
-                    <p className="mt-0.5 line-clamp-1 text-[11px] opacity-80">
+                    <p className="mt-0.5 line-clamp-1 text-[11px] text-white/60">
                       {site.description}
                     </p>
                   </li>
@@ -202,13 +202,13 @@ export function SiteSearchPanel({
 
       {/* Selected Location Card */}
       {selectedLocation && (
-        <div className="mt-3.5 rounded-md border border-border/60 bg-secondary/30 p-3">
+        <div className="mt-3.5 rounded-md border border-white/15 bg-white/[0.04] p-3">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-[10px] font-mono uppercase tracking-wider text-primary">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-[#00e5ff]">
                 Selected Site
               </p>
-              <h3 className="text-sm font-semibold text-foreground">
+              <h3 className="text-sm font-semibold text-white">
                 {selectedLocation.name}
               </h3>
             </div>

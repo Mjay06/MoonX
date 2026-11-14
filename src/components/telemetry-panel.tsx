@@ -91,25 +91,25 @@ export function TelemetryPanel({
     return (
       <section
         aria-labelledby="telemetry-heading"
-        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-xl border border-border/70 bg-card/85 p-6 shadow-2xl backdrop-blur-md sm:bottom-40 sm:right-6 sm:top-16"
+        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-md border border-white/20 bg-black/90 p-6 shadow-2xl backdrop-blur-xl sm:bottom-40 sm:right-6 sm:top-16"
       >
-        <div className="flex items-center justify-between">
-          <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+          <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90">
             Site Telemetry
           </h2>
           {onToggleMobileCollapse && (
             <button
               type="button"
               onClick={onToggleMobileCollapse}
-              className="text-xs text-muted-foreground sm:hidden"
+              className="text-xs text-white/60 sm:hidden"
             >
               Hide
             </button>
           )}
         </div>
         <div className="mt-12 flex flex-col items-center justify-center text-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="mt-3 font-mono text-xs text-muted-foreground">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#00e5ff] border-t-transparent" />
+          <p className="mt-3 font-mono text-xs text-white/60">
             Calculating topocentric vectors...
           </p>
         </div>
@@ -122,9 +122,9 @@ export function TelemetryPanel({
     return (
       <section
         aria-labelledby="telemetry-heading"
-        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-xl border border-amber-500/40 bg-card/85 p-4 shadow-2xl backdrop-blur-md sm:bottom-40 sm:right-6 sm:top-16"
+        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-md border border-amber-500/40 bg-black/90 p-4 shadow-2xl backdrop-blur-xl sm:bottom-40 sm:right-6 sm:top-16"
       >
-        <div className="flex items-center justify-between border-b border-border/40 pb-2">
+        <div className="flex items-center justify-between border-b border-white/10 pb-2">
           <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
             Coverage Unavailable
           </h2>
@@ -132,13 +132,13 @@ export function TelemetryPanel({
             <button
               type="button"
               onClick={onToggleMobileCollapse}
-              className="text-xs text-muted-foreground sm:hidden"
+              className="text-xs text-white/60 sm:hidden"
             >
               Hide
             </button>
           )}
         </div>
-        <div className="mt-4 rounded bg-amber-950/30 p-3 text-xs text-amber-200/90 leading-relaxed">
+        <div className="mt-4 rounded-xs border border-amber-500/30 bg-amber-950/20 p-3 text-xs text-amber-200/90 leading-relaxed">
           <p className="font-semibold">Insufficient Topographic Data</p>
           <p className="mt-1 text-[11px] opacity-80">
             The target location falls outside verified high-resolution lunar south-pole DEM bounds. Visibility status classified as UNKNOWN.
@@ -153,23 +153,23 @@ export function TelemetryPanel({
     return (
       <section
         aria-labelledby="telemetry-heading"
-        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-xl border border-destructive/60 bg-card/85 p-4 shadow-2xl backdrop-blur-md sm:bottom-40 sm:right-6 sm:top-16"
+        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] rounded-md border border-rose-500/40 bg-black/90 p-4 shadow-2xl backdrop-blur-xl sm:bottom-40 sm:right-6 sm:top-16"
       >
-        <div className="flex items-center justify-between border-b border-border/40 pb-2">
-          <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-destructive">
+        <div className="flex items-center justify-between border-b border-white/10 pb-2">
+          <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400">
             Telemetry Error
           </h2>
           {onToggleMobileCollapse && (
             <button
               type="button"
               onClick={onToggleMobileCollapse}
-              className="text-xs text-muted-foreground sm:hidden"
+              className="text-xs text-white/60 sm:hidden"
             >
               Hide
             </button>
           )}
         </div>
-        <div className="mt-4 rounded bg-destructive/15 p-3 text-xs text-rose-200 leading-relaxed">
+        <div className="mt-4 rounded-xs border border-rose-500/30 bg-rose-950/20 p-3 text-xs text-rose-200 leading-relaxed">
           <p className="font-semibold">Ephemeris Calculation Failed</p>
           <p className="mt-1 text-[11px] opacity-80">
             {errorMessage || "Unable to retrieve site ephemeris. Check network connectivity or time inputs."}
@@ -184,12 +184,12 @@ export function TelemetryPanel({
     return (
       <section
         aria-labelledby="telemetry-heading"
-        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border/70 bg-card/85 p-4 shadow-2xl backdrop-blur-md sm:bottom-40 sm:right-6 sm:top-16"
+        className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] overflow-y-auto rounded-md border border-white/20 bg-black/90 p-4 shadow-2xl backdrop-blur-xl sm:bottom-40 sm:right-6 sm:top-16"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
           <h2
             id="telemetry-heading"
-            className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+            className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90"
           >
             Site Telemetry
           </h2>
@@ -197,15 +197,15 @@ export function TelemetryPanel({
             <button
               type="button"
               onClick={onToggleMobileCollapse}
-              className="text-xs text-muted-foreground sm:hidden"
+              className="text-xs text-white/60 sm:hidden"
             >
               Hide
             </button>
           )}
         </div>
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p className="font-mono text-xs">AWAITING LOCATION SELECTION</p>
-          <p className="mt-1 text-xs opacity-70">
+        <div className="mt-8 text-center text-sm text-white/60">
+          <p className="font-mono text-xs text-[#00e5ff] tracking-wider">AWAITING LOCATION SELECTION</p>
+          <p className="mt-2 text-xs text-white/50">
             Select a candidate site on the map or search panel to view celestial line-of-sight.
           </p>
         </div>
@@ -218,18 +218,18 @@ export function TelemetryPanel({
   return (
     <section
       aria-labelledby="telemetry-heading"
-      className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border/70 bg-card/85 p-4 shadow-2xl backdrop-blur-md sm:bottom-40 sm:right-6 sm:top-16"
+      className="pointer-events-auto absolute bottom-36 right-4 top-16 z-20 w-[min(23rem,calc(100vw-2rem))] overflow-y-auto rounded-md border border-white/20 bg-black/90 p-4 shadow-2xl backdrop-blur-xl sm:bottom-40 sm:right-6 sm:top-16"
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/40 pb-2.5">
+      <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
         <div>
           <h2
             id="telemetry-heading"
-            className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+            className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90"
           >
             Site Telemetry
           </h2>
-          <p className="mt-0.5 text-xs font-semibold text-foreground truncate max-w-[14rem]" title={locationName}>
+          <p className="mt-0.5 text-xs font-semibold text-white truncate max-w-[14rem]" title={locationName}>
             {locationName}
           </p>
         </div>
@@ -239,7 +239,7 @@ export function TelemetryPanel({
             <button
               type="button"
               onClick={onToggleMobileCollapse}
-              className="text-xs text-muted-foreground hover:text-foreground sm:hidden"
+              className="text-xs text-white/60 hover:text-white sm:hidden"
               aria-label="Collapse telemetry panel"
             >
               ✕
@@ -249,19 +249,19 @@ export function TelemetryPanel({
       </div>
 
       {/* Epoch timestamp */}
-      <div className="mt-2.5 flex items-center justify-between font-mono text-[11px] text-muted-foreground">
+      <div className="mt-2.5 flex items-center justify-between font-mono text-[11px] text-white/70">
         <span>Epoch (UTC):</span>
-        <span className="font-semibold text-foreground">{timestampUtc}</span>
+        <span className="font-semibold text-[#00e5ff]">{timestampUtc}</span>
       </div>
 
       {/* Joint feasibility banner */}
       <div
-        className={`mt-3 flex items-center justify-between rounded-md border p-2.5 ${
+        className={`mt-3 flex items-center justify-between rounded-xs border p-2.5 ${
           bothVisible
-            ? "border-emerald-600/40 bg-emerald-950/40 text-emerald-300"
+            ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-300"
             : sun.visibility === "CLEAR" || earth.visibility === "CLEAR"
-              ? "border-sky-600/40 bg-sky-950/30 text-sky-300"
-              : "border-rose-700/40 bg-rose-950/30 text-rose-300"
+              ? "border-[#00e5ff]/40 bg-[#00e5ff]/10 text-[#00e5ff]"
+              : "border-rose-500/40 bg-rose-950/25 text-rose-300"
         }`}
       >
         <div className="flex items-center gap-2">
@@ -288,11 +288,11 @@ export function TelemetryPanel({
       </div>
 
       {/* SUN Telemetry Card */}
-      <div className="mt-3.5 rounded-md border border-amber-500/30 bg-amber-950/15 p-3">
+      <div className="mt-3.5 rounded-xs border border-amber-500/30 bg-black/80 p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span
-              className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/20 text-amber-300 text-xs"
+              className="flex h-5 w-5 items-center justify-center rounded-xs bg-amber-500/20 text-amber-300 text-xs"
               aria-hidden="true"
             >
               ☀
@@ -306,22 +306,22 @@ export function TelemetryPanel({
 
         <dl className="mt-2.5 grid grid-cols-2 gap-x-2 gap-y-1.5 font-mono text-xs">
           <div>
-            <dt className="text-[10px] text-muted-foreground uppercase">Azimuth</dt>
-            <dd className="font-semibold text-foreground">{sun.azimuthDeg}° (from N)</dd>
+            <dt className="text-[10px] text-white/50 uppercase">Azimuth</dt>
+            <dd className="font-semibold text-white">{sun.azimuthDeg}° (from N)</dd>
           </div>
           <div>
-            <dt className="text-[10px] text-muted-foreground uppercase">Elevation</dt>
-            <dd className="font-semibold text-foreground">
+            <dt className="text-[10px] text-white/50 uppercase">Elevation</dt>
+            <dd className="font-semibold text-white">
               {sun.elevationDeg > 0 ? "+" : ""}
               {sun.elevationDeg}°
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] text-muted-foreground uppercase">Horizon Mask</dt>
-            <dd className="text-muted-foreground">{sun.horizonMaskDeg > 0 ? "+" : ""}{sun.horizonMaskDeg}°</dd>
+            <dt className="text-[10px] text-white/50 uppercase">Horizon Mask</dt>
+            <dd className="text-white/70">{sun.horizonMaskDeg > 0 ? "+" : ""}{sun.horizonMaskDeg}°</dd>
           </div>
           <div>
-            <dt className="text-[10px] text-muted-foreground uppercase">Clearance Margin</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Clearance Margin</dt>
             <dd
               className={
                 sun.marginDeg > 0.25
@@ -345,7 +345,7 @@ export function TelemetryPanel({
               {sun.visibility === "CLEAR" ? `▲ ${sun.marginDeg > 0 ? "+" : ""}${sun.marginDeg}° Clear` : `▼ ${sun.marginDeg}° Blocked`}
             </span>
           </div>
-          <div className="relative h-2 w-full rounded bg-secondary/80 overflow-hidden flex border border-border/40">
+          <div className="relative h-2 w-full rounded-xs bg-black/90 overflow-hidden flex border border-white/20">
             {/* Terrain obstruction zone below horizon mask */}
             <div
               className="h-full bg-slate-700/60"
@@ -353,7 +353,7 @@ export function TelemetryPanel({
               title={`Crater rim elevation: ${sun.horizonMaskDeg}°`}
             />
           </div>
-          <div className="relative mt-1 flex justify-between font-mono text-[8px] text-muted-foreground">
+          <div className="relative mt-1 flex justify-between font-mono text-[8px] text-white/50">
             <span>-2°</span>
             <span>0° Datum</span>
             <span>+4°</span>
@@ -371,11 +371,11 @@ export function TelemetryPanel({
       </div>
 
       {/* EARTH Telemetry Card */}
-      <div className="mt-3 rounded-md border border-sky-500/30 bg-sky-950/15 p-3">
+      <div className="mt-3 rounded-xs border border-sky-500/30 bg-black/80 p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span
-              className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-500/20 text-sky-300 text-xs"
+              className="flex h-5 w-5 items-center justify-center rounded-xs bg-sky-500/20 text-sky-300 text-xs"
               aria-hidden="true"
             >
               ⊕
@@ -389,22 +389,22 @@ export function TelemetryPanel({
 
         <dl className="mt-2.5 grid grid-cols-2 gap-x-2 gap-y-1.5 font-mono text-xs">
           <div>
-            <dt className="text-[10px] text-muted-foreground uppercase">Azimuth</dt>
-            <dd className="font-semibold text-foreground">{earth.azimuthDeg}° (from N)</dd>
+            <dt className="text-[10px] text-white/50 uppercase">Azimuth</dt>
+            <dd className="font-semibold text-white">{earth.azimuthDeg}° (from N)</dd>
           </div>
           <div>
-            <dt className="text-[10px] text-muted-foreground uppercase">Elevation</dt>
-            <dd className="font-semibold text-foreground">
+            <dt className="text-[10px] text-white/50 uppercase">Elevation</dt>
+            <dd className="font-semibold text-white">
               {earth.elevationDeg > 0 ? "+" : ""}
               {earth.elevationDeg}°
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] text-muted-foreground uppercase">Horizon Mask</dt>
-            <dd className="text-muted-foreground">{earth.horizonMaskDeg > 0 ? "+" : ""}{earth.horizonMaskDeg}°</dd>
+            <dt className="text-[10px] text-white/50 uppercase">Horizon Mask</dt>
+            <dd className="text-white/70">{earth.horizonMaskDeg > 0 ? "+" : ""}{earth.horizonMaskDeg}°</dd>
           </div>
           <div>
-            <dt className="text-[10px] text-muted-foreground uppercase">Clearance Margin</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Clearance Margin</dt>
             <dd
               className={
                 earth.marginDeg > 0.25
@@ -428,7 +428,7 @@ export function TelemetryPanel({
               {earth.visibility === "CLEAR" ? `▲ ${earth.marginDeg > 0 ? "+" : ""}${earth.marginDeg}° Clear` : `▼ ${earth.marginDeg}° Blocked`}
             </span>
           </div>
-          <div className="relative h-2 w-full rounded bg-secondary/80 overflow-hidden flex border border-border/40">
+          <div className="relative h-2 w-full rounded-xs bg-black/90 overflow-hidden flex border border-white/20">
             {/* Terrain obstruction zone below horizon mask */}
             <div
               className="h-full bg-slate-700/60"
@@ -436,7 +436,7 @@ export function TelemetryPanel({
               title={`Crater rim elevation: ${earth.horizonMaskDeg}°`}
             />
           </div>
-          <div className="relative mt-1 flex justify-between font-mono text-[8px] text-muted-foreground">
+          <div className="relative mt-1 flex justify-between font-mono text-[8px] text-white/50">
             <span>-2°</span>
             <span>0° Datum</span>
             <span>+4°</span>
@@ -460,28 +460,28 @@ export function TelemetryPanel({
             variant="outline"
             size="sm"
             onClick={onOpenHorizonPlot}
-            className="w-full text-xs font-mono h-8 border-border/80"
+            className="w-full text-xs font-mono h-8 border-white/20 hover:border-[#00e5ff] hover:text-[#00e5ff]"
           >
             Inspect 360° Horizon Profile
           </Button>
         </div>
       )}
 
-      <Separator className="my-3 opacity-40" />
+      <Separator className="my-3 opacity-20" />
 
       {/* Assumptions toggle */}
       <div>
         <button
           type="button"
           onClick={() => setShowAssumptions(!showAssumptions)}
-          className="flex w-full items-center justify-between text-[11px] font-mono text-muted-foreground hover:text-foreground"
+          className="flex w-full items-center justify-between text-[11px] font-mono text-white/60 hover:text-white"
         >
           <span>Model Assumptions & Limits</span>
           <span aria-hidden="true">{showAssumptions ? "▲" : "▼"}</span>
         </button>
 
         {showAssumptions && (
-          <div className="mt-2 space-y-1.5 rounded bg-secondary/30 p-2 text-[10px] text-muted-foreground leading-relaxed">
+          <div className="mt-2 space-y-1.5 rounded-xs border border-white/10 bg-white/[0.04] p-2.5 text-[10px] text-white/70 leading-relaxed">
             <p>
               • <strong>Geometric line-of-sight only:</strong> Does NOT evaluate antenna gain, RF link margin, solar panel efficiency, or thermal limits.
             </p>
