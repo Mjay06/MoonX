@@ -1,14 +1,42 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
+import dynamic from "next/dynamic";
+import { LunarLocation, CandidateScenario } from "@/types/mission";
+import { SAMPLE_LUNAR_SITES } from "@/data/sample-sites";
+
+// Client-only dynamic mount for the lunar map viewport
+const LunarViewport = dynamic(
+  () => import("./lunar-viewport").then((mod) => mod.LunarViewport),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-0 flex items-center justify-center bg-background text-xs font-mono text-muted-foreground uppercase tracking-widest">
+        Initializing Lunar Viewport...
+      </div>
+    ),
+  }
+);
 
 export function MissionHud() {
+  const [selectedLocation, setSelectedLocation] =
+    useState<LunarLocation | null>(SAMPLE_LUNAR_SITES[0]); // default to Shackleton
+  const [scenarios] = useState<CandidateScenario[]>([]);
+
   return (
     <div className="relative h-screen w-screen overflow-hidden select-none">
-      {/* Full-screen map layer */}
+      {/* Full-screen map viewport mounted inside #cesium-container */}
       <div
         id="cesium-container"
         className="fixed inset-0 z-0 bg-background"
         aria-label="Lunar surface 3D viewport"
-      />
+      >
+        <LunarViewport
+          selectedLocation={selectedLocation}
+          onSelectLocation={setSelectedLocation}
+          comparedLocations={scenarios.map((s) => s.location)}
+        />
+      </div>
 
       {/* Edge-anchored HUD workspace */}
       <div
