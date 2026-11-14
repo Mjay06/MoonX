@@ -6,6 +6,7 @@ import { LunarLocation, CandidateScenario } from "@/types/mission";
 import { SAMPLE_LUNAR_SITES } from "@/data/sample-sites";
 import { SiteSearchPanel } from "./site-search-panel";
 import { CandidateComparisonBar } from "./candidate-comparison-bar";
+import { TimeScrubberPanel } from "./time-scrubber-panel";
 
 // Client-only dynamic mount for the lunar map viewport
 const LunarViewport = dynamic(
@@ -21,6 +22,7 @@ const LunarViewport = dynamic(
 );
 
 const SCENARIO_COLORS = ["#38bdf8", "#c084fc", "#34d399"];
+const MISSION_BASE_TIME_UTC = "2026-11-15T00:00:00Z";
 
 export function MissionHud() {
   const [selectedLocation, setSelectedLocation] =
@@ -31,23 +33,23 @@ export function MissionHud() {
       label: `Candidate 1: ${SAMPLE_LUNAR_SITES[0].name}`,
       location: SAMPLE_LUNAR_SITES[0],
       color: SCENARIO_COLORS[0],
-      createdTimeUtc: "2026-11-15T00:00:00Z",
+      createdTimeUtc: MISSION_BASE_TIME_UTC,
     },
     {
       id: "scenario-init-2",
       label: `Candidate 2: ${SAMPLE_LUNAR_SITES[1].name}`,
       location: SAMPLE_LUNAR_SITES[1],
       color: SCENARIO_COLORS[1],
-      createdTimeUtc: "2026-11-15T00:00:00Z",
+      createdTimeUtc: MISSION_BASE_TIME_UTC,
     },
   ]);
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(
     "scenario-init-1"
   );
+  const [timeOffsetHours, setTimeOffsetHours] = useState<number>(14.0);
 
   const handleSelectLocation = (location: LunarLocation) => {
     setSelectedLocation(location);
-    // If location belongs to a scenario, make it active
     const matching = scenarios.find((s) => s.location.id === location.id);
     if (matching) {
       setActiveScenarioId(matching.id);
@@ -132,10 +134,10 @@ export function MissionHud() {
           maxScenarios={3}
         />
 
-        {/* Right: Telemetry region */}
+        {/* Right: Telemetry region placeholder */}
         <section
           aria-labelledby="telemetry-heading"
-          className="pointer-events-auto absolute bottom-28 right-4 top-24 w-[min(22rem,calc(100vw-2rem))] overflow-auto rounded-lg border border-border/80 bg-card/85 p-4 shadow-xl backdrop-blur-glass-strong sm:bottom-28 sm:right-6 sm:top-6"
+          className="pointer-events-auto absolute bottom-40 right-4 top-24 w-[min(22rem,calc(100vw-2rem))] overflow-auto rounded-lg border border-border/80 bg-card/85 p-4 shadow-xl backdrop-blur-glass-strong sm:bottom-40 sm:right-6 sm:top-6"
         >
           <h2
             id="telemetry-heading"
@@ -148,21 +150,13 @@ export function MissionHud() {
           </p>
         </section>
 
-        {/* Bottom: Time scrubber region */}
-        <section
-          aria-labelledby="time-scrubber-heading"
-          className="pointer-events-auto absolute bottom-4 left-4 right-4 rounded-lg border border-border/80 bg-card/85 p-4 shadow-xl backdrop-blur-glass sm:bottom-6 sm:left-6 sm:right-6"
-        >
-          <h2
-            id="time-scrubber-heading"
-            className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-          >
-            Time scrubber
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Time controls will appear here.
-          </p>
-        </section>
+        {/* Bottom: Mission timeline scrubber */}
+        <TimeScrubberPanel
+          baseTimeUtc={MISSION_BASE_TIME_UTC}
+          durationHours={48}
+          timeOffsetHours={timeOffsetHours}
+          onTimeChange={setTimeOffsetHours}
+        />
       </div>
     </div>
   );
