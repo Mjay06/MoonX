@@ -274,6 +274,7 @@ export function MissionHud() {
           durationHours={48}
           timeOffsetHours={timeOffsetHours}
           onTimeChange={setTimeOffsetHours}
+          selectedLocation={selectedLocation}
         />
       </div>
 
