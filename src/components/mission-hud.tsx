@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import { LunarLocation, CandidateScenario } from "@/types/mission";
 import { SAMPLE_LUNAR_SITES } from "@/data/sample-sites";
+import { SiteSearchPanel } from "./site-search-panel";
 
 // Client-only dynamic mount for the lunar map viewport
 const LunarViewport = dynamic(
@@ -20,12 +21,24 @@ const LunarViewport = dynamic(
 
 export function MissionHud() {
   const [selectedLocation, setSelectedLocation] =
-    useState<LunarLocation | null>(SAMPLE_LUNAR_SITES[0]); // default to Shackleton
-  const [scenarios] = useState<CandidateScenario[]>([]);
+    useState<LunarLocation | null>(SAMPLE_LUNAR_SITES[0]); // Shackleton Crater Rim default
+  const [scenarios, setScenarios] = useState<CandidateScenario[]>([]);
+
+  const handleAddScenario = (location: LunarLocation) => {
+    if (scenarios.length >= 3) return;
+    const newScenario: CandidateScenario = {
+      id: `scenario-${Date.now()}`,
+      label: `Candidate ${scenarios.length + 1}: ${location.name}`,
+      location,
+      color: scenarios.length === 0 ? "#38bdf8" : scenarios.length === 1 ? "#a855f7" : "#34d399",
+      createdTimeUtc: new Date().toISOString(),
+    };
+    setScenarios([...scenarios, newScenario]);
+  };
 
   return (
     <div className="relative h-screen w-screen overflow-hidden select-none">
-      {/* Full-screen map viewport mounted inside #cesium-container */}
+      {/* Full-screen map viewport */}
       <div
         id="cesium-container"
         className="fixed inset-0 z-0 bg-background"
@@ -43,21 +56,14 @@ export function MissionHud() {
         aria-label="Mission workspace"
         className="pointer-events-none absolute inset-0 z-10"
       >
-        {/* Top-left: Site search and comparison region */}
-        <section
-          aria-labelledby="site-search-heading"
-          className="pointer-events-auto absolute left-4 top-4 w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-border/80 bg-card/85 p-4 shadow-xl backdrop-blur-glass sm:left-6 sm:top-6"
-        >
-          <h2
-            id="site-search-heading"
-            className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-          >
-            Site search
-          </h2>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Search controls will appear here.
-          </p>
-        </section>
+        {/* Top-left: Site search and candidate selection */}
+        <SiteSearchPanel
+          selectedLocation={selectedLocation}
+          onSelectLocation={setSelectedLocation}
+          onAddScenario={handleAddScenario}
+          comparisonCount={scenarios.length}
+          maxComparisons={3}
+        />
 
         {/* Right: Telemetry region */}
         <section
