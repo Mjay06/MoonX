@@ -11,6 +11,8 @@ interface LunarViewportProps {
   selectedLocation: LunarLocation | null;
   onSelectLocation: (loc: LunarLocation) => void;
   comparedLocations?: LunarLocation[];
+  mapMode?: MapMode;
+  onMapModeChange?: (mode: MapMode) => void;
 }
 
 // Major lunar south pole craters with realistic dimensions and depths (in km)
@@ -68,9 +70,16 @@ export function LunarViewport({
   selectedLocation,
   onSelectLocation,
   comparedLocations = [],
+  mapMode: controlledMode,
+  onMapModeChange,
 }: LunarViewportProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [mapMode, setMapMode] = useState<MapMode>("relief");
+  const [internalMode, setInternalMode] = useState<MapMode>("relief");
+  const mapMode = controlledMode ?? internalMode;
+  const setMapMode = (m: MapMode) => {
+    setInternalMode(m);
+    onMapModeChange?.(m);
+  };
   const [zoom, setZoom] = useState(1.5);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -722,8 +731,8 @@ export function LunarViewport({
         </div>
       )}
 
-      {/* Viewport Control Overlay (Bottom Left above time scrubber) */}
-      <div className="pointer-events-auto absolute bottom-28 left-4 z-20 flex flex-col gap-1.5 sm:left-6">
+      {/* Viewport Control Overlay (Bottom Left, placed to the right of the sidebar on desktop) */}
+      <div className="pointer-events-auto absolute bottom-32 left-4 z-20 flex flex-col gap-1.5 sm:left-[25.5rem]">
         {/* Layer Mode Switcher & Camera Tools */}
         <div className="flex items-center gap-1.5 rounded-lg border border-border/70 bg-card/85 p-1 backdrop-blur-md shadow-xl">
           <Button

@@ -12,6 +12,7 @@ import { TelemetryPanel } from "./telemetry-panel";
 import { HorizonPlotModal } from "./horizon-plot-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { MapMode } from "./lunar-viewport";
 
 // Client-only dynamic mount for the lunar map viewport
 const LunarViewport = dynamic(
@@ -52,6 +53,7 @@ export function MissionHud() {
     "scenario-init-1"
   );
   const [timeOffsetHours, setTimeOffsetHours] = useState<number>(14.0);
+  const [mapMode, setMapMode] = useState<MapMode>("relief");
   const [isHorizonPlotOpen, setIsHorizonPlotOpen] = useState(false);
   const [isMobileTelemetryCollapsed, setIsMobileTelemetryCollapsed] =
     useState(false);
@@ -141,26 +143,53 @@ export function MissionHud() {
             </span>
           </div>
           <span className="hidden h-4 w-[1px] bg-border/80 sm:inline-block" />
-          <span className="hidden text-xs font-semibold tracking-wider text-muted-foreground uppercase sm:inline-block">
+          <span className="hidden text-xs font-semibold tracking-wider text-muted-foreground uppercase lg:inline-block">
             Lunar Landing Site Navigator
           </span>
-          <Badge variant="illustrative" className="hidden md:inline-flex">
+          <Badge variant="illustrative" className="hidden xl:inline-flex">
             Artemis South Pole
           </Badge>
         </div>
 
-        {/* Center: Selected Site Readout */}
-        {selectedLocation && (
-          <div className="hidden items-center gap-2 lg:flex">
-            <span className="font-mono text-xs text-muted-foreground uppercase">Target:</span>
-            <span className="font-mono text-xs font-semibold text-foreground">
-              {selectedLocation.name}
-            </span>
-            <span className="font-mono text-[11px] text-primary">
-              ({selectedLocation.latitude.toFixed(2)}° S, {selectedLocation.longitude.toFixed(2)}° E)
-            </span>
-          </div>
-        )}
+        {/* Center: Layer View Switcher (Relief | LOLA Topo | Contours) */}
+        <div className="flex items-center gap-1 rounded-lg border border-border/70 bg-secondary/60 p-1 font-mono text-xs shadow-inner">
+          <span className="hidden px-1.5 text-[10px] uppercase tracking-wider text-muted-foreground sm:inline-block">
+            Layer:
+          </span>
+          <button
+            type="button"
+            onClick={() => setMapMode("relief")}
+            className={`rounded px-2.5 py-1 text-xs font-medium transition-all ${
+              mapMode === "relief"
+                ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
+            }`}
+          >
+            Relief
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapMode("lola")}
+            className={`rounded px-2.5 py-1 text-xs font-medium transition-all ${
+              mapMode === "lola"
+                ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
+            }`}
+          >
+            LOLA Topo
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapMode("contours")}
+            className={`rounded px-2.5 py-1 text-xs font-medium transition-all ${
+              mapMode === "contours"
+                ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
+            }`}
+          >
+            Contours
+          </button>
+        </div>
 
         {/* Right: Quick Action Controls */}
         <div className="flex items-center gap-2">
@@ -175,7 +204,7 @@ export function MissionHud() {
               <span className="hidden sm:inline">360° Horizon</span>
             </Button>
           )}
-          <div className="flex items-center rounded-md border border-border/60 bg-secondary/40 px-2 py-1 font-mono text-[11px] text-muted-foreground">
+          <div className="hidden items-center rounded-md border border-border/60 bg-secondary/40 px-2 py-1 font-mono text-[11px] text-muted-foreground sm:flex">
             <span>IAU ME 2000</span>
           </div>
         </div>
@@ -191,6 +220,8 @@ export function MissionHud() {
           selectedLocation={selectedLocation}
           onSelectLocation={handleSelectLocation}
           comparedLocations={scenarios.map((s) => s.location)}
+          mapMode={mapMode}
+          onMapModeChange={setMapMode}
         />
       </div>
 
