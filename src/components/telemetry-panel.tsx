@@ -13,6 +13,8 @@ interface TelemetryPanelProps {
   state?: TelemetryState;
   errorMessage?: string;
   onOpenHorizonPlot?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
   isMobileCollapsed?: boolean;
   onToggleMobileCollapse?: () => void;
 }
@@ -56,31 +58,37 @@ export function TelemetryPanel({
   state = "ready",
   errorMessage,
   onOpenHorizonPlot,
+  isCollapsed,
+  onToggleCollapse,
   isMobileCollapsed = false,
   onToggleMobileCollapse,
 }: TelemetryPanelProps) {
   const [showAssumptions, setShowAssumptions] = useState(false);
 
-  // If collapsed on mobile screens, render a compact floating toggle pill
-  if (isMobileCollapsed) {
+  const collapsed = isCollapsed ?? isMobileCollapsed ?? false;
+  const toggleCollapse = onToggleCollapse ?? onToggleMobileCollapse;
+
+  // If collapsed, render a compact floating toggle pill
+  if (collapsed) {
     return (
-      <div className="pointer-events-auto fixed right-4 top-16 z-30 sm:hidden">
+      <div className="pointer-events-auto fixed right-4 top-16 z-30 sm:right-6">
         <Button
           variant="secondary"
           size="sm"
-          onClick={onToggleMobileCollapse}
-          className="h-8 gap-1.5 border border-border/80 bg-card/90 px-3 text-xs font-mono shadow-lg backdrop-blur-md"
+          onClick={toggleCollapse}
+          className="h-8 gap-2 border border-white/20 bg-black/90 px-3 text-xs font-mono shadow-2xl backdrop-blur-xl text-white hover:border-[#00e5ff] hover:text-[#00e5ff] rounded-xs"
           aria-expanded="false"
           aria-label="Expand site telemetry panel"
         >
-          <span>Telemetry</span>
+          <span>🛰️ Telemetry</span>
           {telemetry && (
             <span
               className={`h-2 w-2 rounded-full ${
-                telemetry.bothVisible ? "bg-emerald-400" : "bg-amber-400"
+                telemetry.bothVisible ? "bg-[#00e5ff] shadow-[0_0_6px_#00e5ff]" : "bg-amber-400"
               }`}
             />
           )}
+          <span className="text-[10px] text-white/50">▾</span>
         </Button>
       </div>
     );
@@ -97,13 +105,15 @@ export function TelemetryPanel({
           <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-white/90">
             Site Telemetry
           </h2>
-          {onToggleMobileCollapse && (
+          {toggleCollapse && (
             <button
               type="button"
-              onClick={onToggleMobileCollapse}
-              className="text-xs text-white/60 sm:hidden"
+              onClick={toggleCollapse}
+              className="h-6 w-6 rounded-xs border border-white/15 bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-xs transition-colors"
+              title="Minimize panel"
+              aria-label="Minimize telemetry panel"
             >
-              Hide
+              ▶
             </button>
           )}
         </div>
@@ -128,13 +138,15 @@ export function TelemetryPanel({
           <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">
             Coverage Unavailable
           </h2>
-          {onToggleMobileCollapse && (
+          {toggleCollapse && (
             <button
               type="button"
-              onClick={onToggleMobileCollapse}
-              className="text-xs text-white/60 sm:hidden"
+              onClick={toggleCollapse}
+              className="h-6 w-6 rounded-xs border border-white/15 bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-xs transition-colors"
+              title="Minimize panel"
+              aria-label="Minimize telemetry panel"
             >
-              Hide
+              ▶
             </button>
           )}
         </div>
@@ -159,13 +171,15 @@ export function TelemetryPanel({
           <h2 id="telemetry-heading" className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-400">
             Telemetry Error
           </h2>
-          {onToggleMobileCollapse && (
+          {toggleCollapse && (
             <button
               type="button"
-              onClick={onToggleMobileCollapse}
-              className="text-xs text-white/60 sm:hidden"
+              onClick={toggleCollapse}
+              className="h-6 w-6 rounded-xs border border-white/15 bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-xs transition-colors"
+              title="Minimize panel"
+              aria-label="Minimize telemetry panel"
             >
-              Hide
+              ▶
             </button>
           )}
         </div>
@@ -193,13 +207,15 @@ export function TelemetryPanel({
           >
             Site Telemetry
           </h2>
-          {onToggleMobileCollapse && (
+          {toggleCollapse && (
             <button
               type="button"
-              onClick={onToggleMobileCollapse}
-              className="text-xs text-white/60 sm:hidden"
+              onClick={toggleCollapse}
+              className="h-6 w-6 rounded-xs border border-white/15 bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-xs transition-colors"
+              title="Minimize panel"
+              aria-label="Minimize telemetry panel"
             >
-              Hide
+              ▶
             </button>
           )}
         </div>
@@ -235,14 +251,15 @@ export function TelemetryPanel({
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="illustrative">Illustrative</Badge>
-          {onToggleMobileCollapse && (
+          {toggleCollapse && (
             <button
               type="button"
-              onClick={onToggleMobileCollapse}
-              className="text-xs text-white/60 hover:text-white sm:hidden"
-              aria-label="Collapse telemetry panel"
+              onClick={toggleCollapse}
+              className="h-6 w-6 rounded-xs border border-white/15 bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-xs transition-colors"
+              title="Minimize panel"
+              aria-label="Minimize telemetry panel"
             >
-              ✕
+              ▶
             </button>
           )}
         </div>

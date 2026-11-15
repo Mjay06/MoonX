@@ -12,6 +12,8 @@ interface CandidateComparisonBarProps {
   onRemoveScenario: (scenarioId: string) => void;
   onResetScenarios: () => void;
   maxScenarios?: number;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export function CandidateComparisonBar({
@@ -21,16 +23,49 @@ export function CandidateComparisonBar({
   onRemoveScenario,
   onResetScenarios,
   maxScenarios = 3,
+  isCollapsed = false,
+  onToggleCollapse,
 }: CandidateComparisonBarProps) {
+  if (isCollapsed) {
+    return (
+      <div className="pointer-events-auto">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onToggleCollapse}
+          className="h-8 gap-2 border border-white/20 bg-black/90 px-3 text-xs font-mono shadow-2xl backdrop-blur-xl text-white hover:border-[#00e5ff] hover:text-[#00e5ff] rounded-xs"
+          aria-expanded="false"
+          aria-label="Expand scenario comparison workspace"
+        >
+          <span>⚖️ Scenarios ({scenarios.length}/{maxScenarios})</span>
+          <span className="text-[10px] text-white/50">▾</span>
+        </Button>
+      </div>
+    );
+  }
+
   if (scenarios.length === 0) {
     return (
       <div
         aria-label="Candidate scenario comparison workspace"
         className="relative w-full rounded-md border border-dashed border-white/20 bg-black/80 p-3 text-center backdrop-blur-xl"
       >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">
-          Scenario Comparison (0/{maxScenarios})
-        </p>
+        <div className="flex items-center justify-between pb-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">
+            Scenario Comparison (0/{maxScenarios})
+          </p>
+          {onToggleCollapse && (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              className="h-5 w-5 rounded-xs border border-white/15 bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-[10px] transition-colors"
+              title="Minimize scenarios"
+              aria-label="Minimize scenarios"
+            >
+              ◀
+            </button>
+          )}
+        </div>
         <p className="mt-1 text-[11px] text-white/50 leading-relaxed">
           Select a site and click <span className="text-[#00e5ff] font-mono">+ Compare</span> to evaluate multiple candidate landing scenarios side-by-side.
         </p>
@@ -52,15 +87,28 @@ export function CandidateComparisonBar({
             Client-Only
           </Badge>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onResetScenarios}
-          className="h-6 px-1.5 text-[11px] text-white/60 hover:text-red-400"
-          title="Clear all compared scenarios"
-        >
-          Reset All
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onResetScenarios}
+            className="h-6 px-1.5 text-[11px] text-white/60 hover:text-red-400"
+            title="Clear all compared scenarios"
+          >
+            Reset All
+          </Button>
+          {onToggleCollapse && (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              className="h-6 w-6 rounded-xs border border-white/15 bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-xs transition-colors"
+              title="Minimize scenarios"
+              aria-label="Minimize scenarios panel"
+            >
+              ◀
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-2 space-y-1.5">

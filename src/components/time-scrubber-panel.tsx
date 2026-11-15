@@ -13,6 +13,8 @@ interface TimeScrubberPanelProps {
   timeOffsetHours: number;
   onTimeChange: (offsetHours: number) => void;
   selectedLocation?: LunarLocation | null;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export function TimeScrubberPanel({
@@ -21,6 +23,8 @@ export function TimeScrubberPanel({
   timeOffsetHours,
   onTimeChange,
   selectedLocation,
+  isCollapsed = false,
+  onToggleCollapse,
 }: TimeScrubberPanelProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showTableView, setShowTableView] = useState(false);
@@ -127,6 +131,50 @@ export function TimeScrubberPanel({
 
   const scrubProgressPct = Math.min(100, Math.max(0, (timeOffsetHours / durationHours) * 100));
 
+  if (isCollapsed) {
+    return (
+      <section
+        aria-label="Mission playback mini-bar"
+        className="pointer-events-auto fixed bottom-4 left-1/2 -translate-x-1/2 z-20"
+      >
+        <div className="flex items-center gap-2.5 rounded-md border border-white/20 bg-black/90 px-3 py-1.5 shadow-2xl backdrop-blur-xl">
+          <Button
+            variant={isPlaying ? "destructive" : "default"}
+            size="sm"
+            onClick={() => setIsPlaying(!isPlaying)}
+            className="h-7 px-3 font-mono text-xs font-semibold rounded-xs"
+            aria-label={isPlaying ? "Pause timeline simulation" : "Play 48-hour timeline simulation"}
+          >
+            {isPlaying ? "⏸ Pause" : "▶ Play"}
+          </Button>
+          <div className="flex items-center gap-2 border-x border-white/10 px-2.5">
+            <span className="font-mono text-xs font-semibold text-[#00e5ff]">
+              T+{timeOffsetHours.toFixed(1).padStart(4, "0")}h
+            </span>
+            <span className="font-mono text-[11px] text-white/80">
+              {currentIsoUtc.slice(11, 16)} UTC
+            </span>
+          </div>
+          <span className="hidden font-mono text-[11px] text-white/60 md:inline">
+            {feasibilityProfile.feasiblePct}% Safe
+          </span>
+          {onToggleCollapse && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleCollapse}
+              className="h-7 px-2 font-mono text-xs text-white/70 hover:text-white rounded-xs border border-white/10 hover:border-white/25"
+              aria-label="Expand full 48-hour timeline and visibility tracks"
+              title="Expand timeline"
+            >
+              Timeline ⌃
+            </Button>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       aria-labelledby="time-scrubber-heading"
@@ -167,6 +215,18 @@ export function TimeScrubberPanel({
           >
             {showTableView ? "Hide Table" : "Table View"}
           </Button>
+          {onToggleCollapse && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleCollapse}
+              className="h-6 px-1.5 text-[11px] font-mono text-white/60 hover:text-white border border-white/10 hover:border-white/25 rounded-xs"
+              title="Minimize timeline to floating bar"
+              aria-label="Minimize timeline"
+            >
+              Minimize ⌄
+            </Button>
+          )}
         </div>
       </div>
 

@@ -55,8 +55,24 @@ export function MissionHud() {
   const [timeOffsetHours, setTimeOffsetHours] = useState<number>(14.0);
   const [mapMode, setMapMode] = useState<MapMode>("relief");
   const [isHorizonPlotOpen, setIsHorizonPlotOpen] = useState(false);
-  const [isMobileTelemetryCollapsed, setIsMobileTelemetryCollapsed] =
-    useState(false);
+  const [isSearchCollapsed, setIsSearchCollapsed] = useState(false);
+  const [isScenariosCollapsed, setIsScenariosCollapsed] = useState(false);
+  const [isTelemetryCollapsed, setIsTelemetryCollapsed] = useState(false);
+  const [isTimelineCollapsed, setIsTimelineCollapsed] = useState(false);
+
+  const allPanelsCollapsed =
+    isSearchCollapsed &&
+    isScenariosCollapsed &&
+    isTelemetryCollapsed &&
+    isTimelineCollapsed;
+
+  const handleToggleAllPanels = () => {
+    const nextState = !allPanelsCollapsed;
+    setIsSearchCollapsed(nextState);
+    setIsScenariosCollapsed(nextState);
+    setIsTelemetryCollapsed(nextState);
+    setIsTimelineCollapsed(nextState);
+  };
 
   // Derive current telemetry deterministically from active location & scrubbed time
   const currentTelemetry = useMemo(() => {
@@ -193,6 +209,20 @@ export function MissionHud() {
 
         {/* Right: Quick Action Controls */}
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToggleAllPanels}
+            className="h-8 gap-1.5 text-xs font-mono border-white/20 text-white/80 hover:border-[#00e5ff] hover:text-[#00e5ff]"
+            title={
+              allPanelsCollapsed
+                ? "Show all HUD panels"
+                : "Hide all HUD panels for clear Moon view"
+            }
+          >
+            <span>{allPanelsCollapsed ? "▣ Show Panels" : "▢ Full Map"}</span>
+          </Button>
+
           {currentTelemetry && (
             <Button
               variant="outline"
@@ -243,6 +273,8 @@ export function MissionHud() {
               onAddScenario={handleAddScenario}
               comparisonCount={scenarios.length}
               maxComparisons={3}
+              isCollapsed={isSearchCollapsed}
+              onToggleCollapse={() => setIsSearchCollapsed(!isSearchCollapsed)}
             />
           </div>
 
@@ -254,28 +286,34 @@ export function MissionHud() {
               onRemoveScenario={handleRemoveScenario}
               onResetScenarios={handleResetScenarios}
               maxScenarios={3}
+              isCollapsed={isScenariosCollapsed}
+              onToggleCollapse={() => setIsScenariosCollapsed(!isScenariosCollapsed)}
             />
           </div>
         </aside>
 
-        {/* Right: Sun and Earth Telemetry Cards (Collapsible on mobile) */}
+        {/* Right: Sun and Earth Telemetry Cards (Collapsible) */}
         <TelemetryPanel
           telemetry={currentTelemetry}
           state={currentTelemetry ? "ready" : "empty"}
           onOpenHorizonPlot={() => setIsHorizonPlotOpen(true)}
-          isMobileCollapsed={isMobileTelemetryCollapsed}
-          onToggleMobileCollapse={() =>
-            setIsMobileTelemetryCollapsed(!isMobileTelemetryCollapsed)
+          isCollapsed={isTelemetryCollapsed}
+          onToggleCollapse={() =>
+            setIsTelemetryCollapsed(!isTelemetryCollapsed)
           }
         />
 
-        {/* Bottom: Mission timeline scrubber */}
+        {/* Bottom: Mission timeline scrubber (Collapsible) */}
         <TimeScrubberPanel
           baseTimeUtc={MISSION_BASE_TIME_UTC}
           durationHours={48}
           timeOffsetHours={timeOffsetHours}
           onTimeChange={setTimeOffsetHours}
           selectedLocation={selectedLocation}
+          isCollapsed={isTimelineCollapsed}
+          onToggleCollapse={() =>
+            setIsTimelineCollapsed(!isTimelineCollapsed)
+          }
         />
       </div>
 

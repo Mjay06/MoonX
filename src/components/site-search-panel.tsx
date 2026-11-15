@@ -14,6 +14,8 @@ interface SiteSearchPanelProps {
   onAddScenario?: (location: LunarLocation) => void;
   comparisonCount?: number;
   maxComparisons?: number;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export function SiteSearchPanel({
@@ -22,6 +24,8 @@ export function SiteSearchPanel({
   onAddScenario,
   comparisonCount = 0,
   maxComparisons = 3,
+  isCollapsed = false,
+  onToggleCollapse,
 }: SiteSearchPanelProps) {
   const [query, setQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -69,6 +73,29 @@ export function SiteSearchPanel({
     }
   };
 
+  if (isCollapsed) {
+    return (
+      <div className="pointer-events-auto">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onToggleCollapse}
+          className="h-8 gap-2 border border-white/20 bg-black/90 px-3 text-xs font-mono shadow-2xl backdrop-blur-xl text-white hover:border-[#00e5ff] hover:text-[#00e5ff] rounded-xs"
+          aria-expanded="false"
+          aria-label="Expand site search and candidate locations panel"
+        >
+          <span>📍 Sites</span>
+          {selectedLocation && (
+            <span className="font-semibold text-[#00e5ff] max-w-[120px] truncate">
+              {selectedLocation.name.replace(" Crater Rim", "").replace(" Rim 1", "")}
+            </span>
+          )}
+          <span className="text-[10px] text-white/50">▾</span>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <section
       aria-labelledby="site-search-heading"
@@ -81,7 +108,20 @@ export function SiteSearchPanel({
         >
           Site Search & Candidates
         </h2>
-        <Badge variant="illustrative">Sample Data</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="illustrative">Sample Data</Badge>
+          {onToggleCollapse && (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              className="h-6 w-6 rounded-xs border border-white/15 bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-xs transition-colors"
+              title="Minimize panel"
+              aria-label="Minimize site search panel"
+            >
+              ◀
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Search Input */}
