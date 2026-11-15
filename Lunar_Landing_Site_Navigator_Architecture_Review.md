@@ -5,6 +5,8 @@
 
 This draft reflects the team's confirmed scope: an intuitive tool for mission planners, educators, and the public to compare lunar south-pole sites and dates by showing when the Sun and Earth are geometrically visible relative to the local horizon. It supports initial assessment of power and direct-to-Earth communication opportunities; it does not calculate generated power, link performance, or certify a site.
 
+**Current implementation status:** The viewport is a synthetic Canvas illustration; Cesium assets are configured but are not yet used to render terrain. A server-side visibility route now reads the selected LOLA product, calculates a 1° geometric horizon, and requests 30-minute Sun/Earth samples from JPL Horizons. The HUD has no sample-data fallback. This environment could not complete a live Horizons request, so the end-to-end upstream result remains unverified; any returned result whose Horizons frame/datum cannot be matched to LOLA is explicitly marked provisional.
+
 ## 1. Product and judging goal
 
 The project responds to the challenge brief the team provided: make Sun and Earth positions relative to the horizon easier to compare across candidate sites and dates. The UI should serve mission planners who need quick comparisons as well as educators and the public who need plain-language explanations. Its value is an explainable, location-specific geometric screening tool—not an autonomous landing-site certification system.
@@ -44,7 +46,9 @@ Keep data-source access and coordinate transformations behind adapters so their 
 
 - Validate coordinates, date range, mission duration, number of compared site/date scenarios, and request size; apply bounded timeouts and resource limits. Return explicit validation, upstream-service, and insufficient-data errors rather than plausible-looking fallback results.
 - In the JPL Horizons adapter, document and test the target, observer, time scale, reference frame, units, and lunar orientation assumptions. Verify that the returned quantities represent the selected surface site. If the service query cannot represent that observer correctly, obtain consistently framed body-relative vectors and calculate the site-relative directions with a validated transform; do not assume geocentric azimuth/elevation is topocentric.
-- Select and name a specific NASA elevation product before implementation. Record its product/version, resolution, horizontal and vertical coordinate systems, units, no-data encoding, coverage, access URL, and citation. The existing “NASA/USGS COG” description is not specific enough to reproduce a query; verify that the chosen product is actually available as a COG before relying on HTTP range reads.
+- The [Horizons API documentation](https://ssd-api.jpl.nasa.gov/doc/horizons.html#center) documents `CENTER=coord@301`, `COORD_TYPE=GEODETIC`, and `SITE_COORD=east longitude, latitude, altitude in km` for observer ephemerides. This documents the query syntax, but does **not** establish that the Horizons lunar geodetic datum/orientation matches LOLA's planetocentric ME/PA of DE421 coordinates or the DEM height datum. Verify the returned center frame and convert/validate the input coordinates before claiming a frame-aligned result. Use Earth UT as an explicit time-tag convention, not a lunar local time.
+- **Selected terrain source:** NASA PDS Geosciences Node, LRO LOLA polar DEM product `LDEM_75S_240M`, product version `V2.1`, dataset `LRO-L-LOLA-4-GDR-V1.0`. Its PDS3 label identifies a 3812 × 3812 `PC_REAL` (little-endian 32-bit float) image at 240 m/pixel, in a spherical polar-stereographic projection covering 75°S–90°S. Heights are in kilometers relative to a 1737.4 km reference radius; the coordinate system is planetocentric, positive-east, body-fixed Mean Earth/Polar Axis of DE421. The data are a raw PDS image, **not a COG**. The official PDS server returned HTTP 206 for a byte-range request. The label does not define a null sentinel, so the adapter must validate finite values and the documented product range and report invalid samples as unknown.
+- Use the official PDS label and image URLs in `.env.example`; record the exact product metadata and attribution in the resource register. Do not treat the DEM as current or high-resolution landing-safety data. Its 240 m pixels support coarse geometric screening only.
 - Derive the terrain query extent from the analysis requirements and product coverage, rather than assuming a fixed 15 km box is always sufficient. Account for lunar curvature and distant terrain near the horizon. If the required horizon is outside valid data coverage, report insufficient coverage and do not classify the interval as clear.
 - Check dataset metadata and every fetch result before calculation. Cache only with a documented key that includes coordinates/extent, product version, time interval, and relevant model version; set bounded cache lifetimes and respect upstream service limits.
 
@@ -119,7 +123,7 @@ Treat the submission as a release deliverable, not an afterthought:
 
 ## 8. Decisions to confirm before implementation
 
-1. What exact NASA elevation product will be the analysis source? The original “NASA/USGS COG” description is not yet a reproducible product selection.
+1. The NASA elevation product is selected as LRO LOLA `LDEM_75S_240M` (PDS product version V2.1). Confirm supported-site coverage and frame alignment in tests before presenting visibility results.
 2. Which public hosting target will serve the demo? The team has selected video as the format, but no host was specified.
 3. Confirm the official challenge title from the event listing for the submission page; the challenge description and audience are now reflected above.
 

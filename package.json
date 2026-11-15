@@ -4,15 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "cesium:assets": "node scripts/copy-cesium-assets.mjs",
+    "predev": "npm run cesium:assets",
     "dev": "next dev --webpack",
+    "prebuild": "npm run cesium:assets",
     "build": "next build --webpack",
+    "prestart": "npm run cesium:assets",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node src/smoke/ui-workflow-smoke.ts",
+    "test": "node src/smoke/ui-workflow-smoke.ts && node src/smoke/server-config-smoke.ts && node src/smoke/lola-dem-smoke.ts && node src/smoke/webgeocalc-smoke.ts",
     "check": "npm run lint && npm run typecheck && npm run test"
   },
   "dependencies": {
+    "cesium": "^1.147.0",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0"

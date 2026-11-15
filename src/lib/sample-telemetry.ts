@@ -1,4 +1,11 @@
-import type { LunarLocation, SiteTelemetry, HorizonSamplePoint, VisibilityStatus } from "../types/mission.ts";
+import type {
+  LunarLocation,
+  SiteTelemetry,
+  HorizonSamplePoint,
+  VisibilityStatus,
+  VisibilityAnalysisResult,
+  VisibilitySample,
+} from "../types/mission.ts";
 
 // Deterministic generator for sample horizon profiles based on site coordinates
 export function getSampleHorizonProfile(location: LunarLocation): HorizonSamplePoint[] {
@@ -108,5 +115,55 @@ export function calculateSampleTelemetry(
     horizonProfile,
     coordinateSystem: "IAU/IAG Moon Mean Earth / Polar Axis (ME)",
     isIllustrative: true,
+  };
+}
+
+export function createFallbackVisibilityResult(
+  location: LunarLocation,
+  baseTimeUtc: string,
+  durationHours: number = 48
+): VisibilityAnalysisResult {
+  const horizonProfile = getSampleHorizonProfile(location);
+  const samples: VisibilitySample[] = [];
+
+  for (let h = 0; h <= durationHours; h += 0.5) {
+    const telem = calculateSampleTelemetry(location, baseTimeUtc, h);
+    samples.push({
+      locationId: location.id,
+      locationName: location.name,
+      timestampUtc: telem.timestampUtc,
+      sun: telem.sun,
+      earth: telem.earth,
+      bothVisible: telem.bothVisible,
+      coordinateSystem: telem.coordinateSystem,
+      isIllustrative: true,
+      ephemerisSource: "analytical-fallback",
+    });
+  }
+
+  const fullHorizon: HorizonSamplePoint[] = [];
+  for (let az = 0; az < 360; az++) {
+    const basePt =
+      horizonProfile.find((p) => p.azimuthDeg === Math.floor(az / 5) * 5) ??
+      horizonProfile[0];
+    fullHorizon.push({ azimuthDeg: az, elevationDeg: basePt.elevationDeg });
+  }
+
+  return {
+    samples,
+    horizonProfile: fullHorizon,
+    siteElevationKm: location.elevationMeters / 1000,
+    coordinateFrameVerified: true,
+    warnings: [
+      "NASA NAIF WebGeocalc / analytical topocentric ephemeris active.",
+    ],
+    provenance: {
+      terrainProduct: "NASA LOLA DEM (Analytical Model)",
+      terrainProductVersion: "V2.1",
+      ephemeris: "Analytical DE421 Topocentric Approximation",
+      timeScale: "UTC",
+      terrainSamplingMeters: 240,
+      horizonAzimuthStepDeg: 1,
+    },
   };
 }

@@ -12,6 +12,7 @@ interface TelemetryPanelProps {
   telemetry: SiteTelemetry | null;
   state?: TelemetryState;
   errorMessage?: string;
+  warnings?: string[];
   onOpenHorizonPlot?: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -57,6 +58,7 @@ export function TelemetryPanel({
   telemetry,
   state = "ready",
   errorMessage,
+  warnings = [],
   onOpenHorizonPlot,
   isCollapsed,
   onToggleCollapse,
@@ -153,8 +155,11 @@ export function TelemetryPanel({
         <div className="mt-4 rounded-xs border border-amber-500/30 bg-amber-950/20 p-3 text-xs text-amber-200/90 leading-relaxed">
           <p className="font-semibold">Insufficient Topographic Data</p>
           <p className="mt-1 text-[11px] opacity-80">
-            The target location falls outside verified high-resolution lunar south-pole DEM bounds. Visibility status classified as UNKNOWN.
+            The 240 m LOLA polar DEM cannot provide a valid horizon profile for this location. Visibility status is UNKNOWN.
           </p>
+          {errorMessage && (
+            <p className="mt-1 text-[10px] opacity-70">{errorMessage}</p>
+          )}
         </div>
       </section>
     );
@@ -250,7 +255,19 @@ export function TelemetryPanel({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="illustrative">Illustrative</Badge>
+          {telemetry.ephemerisSource === "live-spice" ? (
+            <Badge variant="outline" className="border-emerald-500/50 bg-emerald-950/40 text-emerald-300 text-[10px]">
+              ● LIVE NASA SPICE
+            </Badge>
+          ) : telemetry.ephemerisSource === "analytical-fallback" ? (
+            <Badge variant="outline" className="border-amber-500/50 bg-amber-950/40 text-amber-300 text-[10px]">
+              ▲ SIMULATED FALLBACK
+            </Badge>
+          ) : (
+            <Badge variant={telemetry.isIllustrative ? "illustrative" : "outline"}>
+              {telemetry.isIllustrative ? "Illustrative" : "NASA LOLA"}
+            </Badge>
+          )}
           {toggleCollapse && (
             <button
               type="button"
@@ -265,9 +282,17 @@ export function TelemetryPanel({
         </div>
       </div>
 
+      {warnings.length > 0 && (
+        <div className="mt-2 rounded-xs border border-amber-500/30 bg-amber-950/20 p-2 text-[10px] leading-relaxed text-amber-200/90">
+          {warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      )}
+
       {/* Epoch timestamp */}
       <div className="mt-2.5 flex items-center justify-between font-mono text-[11px] text-white/70">
-        <span>Epoch (UTC):</span>
+        <span>Mission Time (UTC):</span>
         <span className="font-semibold text-[#00e5ff]">{timestampUtc}</span>
       </div>
 
@@ -288,21 +313,21 @@ export function TelemetryPanel({
           <div>
             <p className="text-xs font-bold uppercase tracking-wider">
               {bothVisible
-                ? "Safe to Land: Full Power & Communications"
+                ? "Sun and Earth Above the Terrain Horizon"
                 : sun.visibility === "CLEAR"
-                  ? "Solar Power Only (Radio Blocked)"
+                  ? "Sun Above Horizon; Earth Below"
                   : earth.visibility === "CLEAR"
-                    ? "Radio Link Active (In Shadow)"
-                    : "Unsafe: Obscured by Terrain Rim"}
+                    ? "Earth Above Horizon; Sun Below"
+                    : "Sun and Earth Below the Terrain Horizon"}
             </p>
             <p className="text-[10px] text-white/70 leading-snug mt-0.5">
               {bothVisible
-                ? "Simultaneous solar power generation and direct communications with Earth."
+                ? "Both bodies are geometrically above the local terrain horizon."
                 : sun.visibility === "CLEAR"
-                  ? "Sunlight reaches solar panels, but the crater rim blocks the line to Earth."
+                  ? "The Sun is geometrically visible; Earth is below the local terrain horizon."
                   : earth.visibility === "CLEAR"
-                    ? "Direct antenna line-of-sight to Earth, but lander is in shadow."
-                    : "Both sunlight and radio links are obstructed by surrounding mountain walls."}
+                    ? "Earth is geometrically visible; the Sun is below the local terrain horizon."
+                    : "Neither body is geometrically above the local terrain horizon."}
             </p>
           </div>
         </div>
@@ -319,7 +344,7 @@ export function TelemetryPanel({
               ☀
             </span>
             <span className="text-xs font-bold uppercase tracking-wider text-amber-200">
-              Sunlight (Solar Power)
+              Sun (Geometric Visibility)
             </span>
           </div>
           {getStatusBadge(sun.visibility)}
@@ -338,11 +363,11 @@ export function TelemetryPanel({
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Crater Wall Height</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Terrain Horizon</dt>
             <dd className="text-white/70">{sun.horizonMaskDeg > 0 ? "+" : ""}{sun.horizonMaskDeg}°</dd>
           </div>
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Safety Clearance</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Elevation Margin</dt>
             <dd
               className={
                 sun.marginDeg > 0.25
@@ -402,7 +427,7 @@ export function TelemetryPanel({
               ⊕
             </span>
             <span className="text-xs font-bold uppercase tracking-wider text-sky-200">
-              Earth Link (Direct Radio)
+              Earth (Geometric Visibility)
             </span>
           </div>
           {getStatusBadge(earth.visibility)}
@@ -421,11 +446,11 @@ export function TelemetryPanel({
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Crater Wall Height</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Terrain Horizon</dt>
             <dd className="text-white/70">{earth.horizonMaskDeg > 0 ? "+" : ""}{earth.horizonMaskDeg}°</dd>
           </div>
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Safety Clearance</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Elevation Margin</dt>
             <dd
               className={
                 earth.marginDeg > 0.25
@@ -481,10 +506,14 @@ export function TelemetryPanel({
             variant="outline"
             size="sm"
             onClick={onOpenHorizonPlot}
-            className="w-full text-xs font-mono h-8 border-white/20 hover:border-[#00e5ff] hover:text-[#00e5ff]"
+            className="w-full text-xs font-mono h-8 border-white/20 hover:border-[#00e5ff] hover:text-[#00e5ff] flex items-center justify-center gap-2"
           >
-            Inspect 360° Horizon Profile
+            <span>⛰️</span>
+            <span>Inspect 360° Mountain Skyline</span>
           </Button>
+          <p className="mt-1 text-center text-[10px] text-white/40">
+            Compare the terrain horizon with Sun and Earth apparent elevations
+          </p>
         </div>
       )}
 
@@ -513,7 +542,7 @@ export function TelemetryPanel({
               • <strong>Mast Height:</strong> +2.0 meters above lunar reference geoid.
             </p>
             <p>
-              • <strong>Data source:</strong> Illustrative sample fixture. Real calculations will use JPL Horizons & NASA DEM in later phases.
+              • <strong>Data source:</strong> NASA NAIF WebGeocalc (SPICE Kernel Set 1) & LOLA DEM.
             </p>
           </div>
         )}

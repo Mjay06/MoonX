@@ -12,11 +12,11 @@ interface LunarViewportProps {
   onSelectLocation: (loc: LunarLocation) => void;
   comparedLocations?: LunarLocation[];
   mapMode?: MapMode;
-  onMapModeChange?: (mode: MapMode) => void;
   telemetry?: SiteTelemetry | null;
+  timeOffsetHours?: number;
 }
 
-// Major lunar south pole craters with realistic dimensions and depths (in km)
+// Illustrative south-polar crater shapes with approximate dimensions (km).
 const MAJOR_CRATERS = [
   { name: "Shackleton", lat: -89.9, lon: 0.0, radiusDeg: 0.35, depthKm: 4.2, psr: true },
   { name: "de Gerlache", lat: -88.5, lon: 271.7, radiusDeg: 0.55, depthKm: 3.8, psr: true },
@@ -72,16 +72,11 @@ export function LunarViewport({
   onSelectLocation,
   comparedLocations = [],
   mapMode: controlledMode,
-  onMapModeChange,
   telemetry,
+  timeOffsetHours = 0,
 }: LunarViewportProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [internalMode, setInternalMode] = useState<MapMode>("relief");
-  const mapMode = controlledMode ?? internalMode;
-  const setMapMode = (m: MapMode) => {
-    setInternalMode(m);
-    onMapModeChange?.(m);
-  };
+  const mapMode = controlledMode ?? "relief";
   const [zoom, setZoom] = useState(1.5);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -110,7 +105,7 @@ export function LunarViewport({
 
   // Polar stereographic projection: South pole is center (lat = -90).
   // Distance from pole in degrees = (lat + 90). Radius R = (dist / 10.0) * baseRadius.
-  // 0° longitude points UP (towards Earth / Prime Meridian).
+  // In the solar-fixed frame, the Moon physically rotates on its axis at ~0.508°/hour
   const latLonToCanvas = useCallback(
     (
       lat: number,
@@ -125,13 +120,14 @@ export function LunarViewport({
       const distFromPole = Math.max(0, lat + 90);
       const r = Math.max(0, (distFromPole / 10.0) * baseRadius);
 
-      const rad = ((lon - 90) * Math.PI) / 180;
+      const rot = timeOffsetHours * 0.508;
+      const rad = ((lon - 90 + rot) * Math.PI) / 180;
       const x = centerX + r * Math.cos(rad);
       const y = centerY + r * Math.sin(rad);
 
       return { x, y };
     },
-    [pan, zoom]
+    [pan, zoom, timeOffsetHours]
   );
 
   const canvasToLatLon = useCallback(
@@ -152,16 +148,17 @@ export function LunarViewport({
       const distFromPole = (r / baseRadius) * 10.0;
       const lat = Math.max(-90, Math.min(-80, -90 + distFromPole));
 
-      let angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
-      if (angleDeg < 0) angleDeg += 360;
-      if (angleDeg >= 360) angleDeg -= 360;
+      const rot = timeOffsetHours * 0.508;
+      let angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI + 90 - rot;
+      while (angleDeg < 0) angleDeg += 360;
+      while (angleDeg >= 360) angleDeg -= 360;
 
       return {
         lat: Number(lat.toFixed(4)),
         lon: Number(angleDeg.toFixed(4)),
       };
     },
-    [pan, zoom]
+    [pan, zoom, timeOffsetHours]
   );
 
   // Main Canvas Rendering Engine
@@ -190,17 +187,18 @@ export function LunarViewport({
     const centerY = height / 2 + pan.y;
     const baseRadius = Math.max(10, Math.min(width, height) * 0.44 * zoom);
 
-    // Dynamic Sun and Earth positions derived from telemetry
+    // In the inertial solar frame, the Sun is STATIONARY in space (illuminating from top)
+    const fixedSunRad = -Math.PI / 2;
+    const fixedSunOppositeRad = Math.PI / 2;
+
+    // Dynamic Earth and Sun positions derived from telemetry
     const sunAzimuth = telemetry?.sun?.azimuthDeg ?? 45;
     const sunElevation = telemetry?.sun?.elevationDeg ?? 1.5;
     const isSunClear = telemetry?.sun?.visibility === "CLEAR";
     const earthAzimuth = telemetry?.earth?.azimuthDeg ?? 40;
     const earthElevation = telemetry?.earth?.elevationDeg ?? 5.2;
     const isEarthClear = telemetry?.earth?.visibility === "CLEAR";
-
-    // Canvas angle in radians (0° azimuth is UP)
-    const sunRad = ((sunAzimuth - 90) * Math.PI) / 180;
-    const sunOppositeRad = sunRad + Math.PI;
+    const moonRotDeg = timeOffsetHours * 0.508;
 
     // Deep space background
     ctx.fillStyle = "#05070b";
@@ -230,7 +228,7 @@ export function LunarViewport({
     ctx.clip();
 
     if (mapMode === "lola") {
-      // NASA LOLA FALSE-COLOR ELEVATION TOPOGRAPHY
+      // Synthetic false-color elevation style.
       const lolaGrad = ctx.createRadialGradient(
         centerX,
         centerY,
@@ -239,18 +237,18 @@ export function LunarViewport({
         centerY,
         baseRadius * 1.15
       );
-      lolaGrad.addColorStop(0, "#1e1b4b"); // Deep polar basin (-4000m)
-      lolaGrad.addColorStop(0.35, "#0f766e"); // Mid plains (0m datum)
-      lolaGrad.addColorStop(0.7, "#ca8a04"); // Highland ridges (+2000m)
-      lolaGrad.addColorStop(0.92, "#dc2626"); // Mountain crests (+4000m)
-      lolaGrad.addColorStop(1, "#1e293b"); // Outer margin
+      lolaGrad.addColorStop(0, "#1e1b4b");
+      lolaGrad.addColorStop(0.35, "#0f766e");
+      lolaGrad.addColorStop(0.7, "#ca8a04");
+      lolaGrad.addColorStop(0.92, "#dc2626");
+      lolaGrad.addColorStop(1, "#1e293b");
       ctx.fillStyle = lolaGrad;
       ctx.fillRect(centerX - baseRadius * 1.2, centerY - baseRadius * 1.2, baseRadius * 2.4, baseRadius * 2.4);
     } else {
-      // PHOTOREALISTIC SHADED REGOLITH RELIEF (Dynamic illumination from current Sun angle)
+      // Synthetic shaded relief style.
       const surfGrad = ctx.createRadialGradient(
-        centerX + Math.cos(sunRad) * baseRadius * 0.35,
-        centerY + Math.sin(sunRad) * baseRadius * 0.35,
+        centerX,
+        centerY - baseRadius * 0.35,
         baseRadius * 0.05,
         centerX,
         centerY,
@@ -296,9 +294,9 @@ export function LunarViewport({
         ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
         ctx.fill();
 
-        // Illuminated rim crescent dynamically facing current Sun direction
+        // Illuminated rim crescent facing stationary Sun in space
         ctx.beginPath();
-        ctx.arc(pos.x, pos.y, r, sunRad - Math.PI * 0.5, sunRad + Math.PI * 0.5);
+        ctx.arc(pos.x, pos.y, r, fixedSunRad - Math.PI * 0.5, fixedSunRad + Math.PI * 0.5);
         ctx.strokeStyle = "rgba(220, 235, 255, 0.35)";
         ctx.lineWidth = 1;
         ctx.stroke();
@@ -321,10 +319,10 @@ export function LunarViewport({
           : "rgba(160, 185, 215, 0.08)";
       ctx.fill();
 
-      // 2. Terraced Crater Wall Gradient oriented to dynamic Sun
+      // 2. Terraced Crater Wall Gradient oriented to stationary Sun
       const craterGrad = ctx.createRadialGradient(
-        pos.x + Math.cos(sunOppositeRad) * r * 0.3,
-        pos.y + Math.sin(sunOppositeRad) * r * 0.3,
+        pos.x + Math.cos(fixedSunOppositeRad) * r * 0.3,
+        pos.y + Math.sin(fixedSunOppositeRad) * r * 0.3,
         Math.max(0.5, r * 0.08),
         pos.x,
         pos.y,
@@ -351,14 +349,14 @@ export function LunarViewport({
       // 3. Central Peak (for Amundsen)
       if (crater.centralPeak) {
         ctx.beginPath();
-        ctx.arc(pos.x + Math.cos(sunRad) * r * 0.1, pos.y + Math.sin(sunRad) * r * 0.1, r * 0.22, 0, Math.PI * 2);
+        ctx.arc(pos.x + Math.cos(fixedSunRad) * r * 0.1, pos.y + Math.sin(fixedSunRad) * r * 0.1, r * 0.22, 0, Math.PI * 2);
         ctx.fillStyle = mapMode === "lola" ? "#f59e0b" : "rgba(200, 225, 255, 0.55)";
         ctx.fill();
       }
 
-      // 4. Sunlit Rim Crest Crescent (Dynamically oriented to current Sun angle)
+      // 4. Sunlit Rim Crest Crescent (Stationary Sun angle from above)
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, r, sunRad - Math.PI * 0.55, sunRad + Math.PI * 0.55);
+      ctx.arc(pos.x, pos.y, r, fixedSunRad - Math.PI * 0.55, fixedSunRad + Math.PI * 0.55);
       ctx.strokeStyle =
         mapMode === "lola"
           ? "rgba(254, 240, 138, 0.9)"
@@ -368,7 +366,7 @@ export function LunarViewport({
 
       // 5. Shadowed Rim Wall
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, r, sunOppositeRad - Math.PI * 0.55, sunOppositeRad + Math.PI * 0.55);
+      ctx.arc(pos.x, pos.y, r, fixedSunOppositeRad - Math.PI * 0.55, fixedSunOppositeRad + Math.PI * 0.55);
       ctx.strokeStyle = "rgba(4, 6, 9, 0.9)";
       ctx.lineWidth = Math.max(1.2, r * 0.07);
       ctx.stroke();
@@ -408,12 +406,12 @@ export function LunarViewport({
       ctx.lineCap = "round";
       ctx.stroke();
 
-      // Dynamic Mountain Shadow Cast in direction of sunOppositeRad
+      // Dynamic Mountain Shadow Cast in direction of stationary sun opposite
       ctx.beginPath();
       ctx.moveTo(pPeak.x, pPeak.y);
       ctx.lineTo(
-        pPeak.x + Math.cos(sunOppositeRad) * 22 * zoom,
-        pPeak.y + Math.sin(sunOppositeRad) * 22 * zoom
+        pPeak.x + Math.cos(fixedSunOppositeRad) * 22 * zoom,
+        pPeak.y + Math.sin(fixedSunOppositeRad) * 22 * zoom
       );
       ctx.strokeStyle = "rgba(3, 5, 8, 0.8)";
       ctx.lineWidth = Math.max(2, 3 * zoom);
@@ -599,10 +597,10 @@ export function LunarViewport({
       // -------------------------------------------------------------
       // LAYER 8.5: DYNAMIC VISUAL SUN & EARTH SIGHTLINE VECTORS ON MAP
       // -------------------------------------------------------------
-      // 1. SOLAR ILLUMINATION BEAM (Warm Gold Ray arriving from Sun Azimuth)
+      // 1. SOLAR ILLUMINATION BEAM (Warm Gold Ray arriving from stationary Sun in space)
       const sunBeamLen = Math.min(width, height) * 0.32;
-      const sunSourceX = pos.x + Math.cos(sunRad) * sunBeamLen;
-      const sunSourceY = pos.y + Math.sin(sunRad) * sunBeamLen;
+      const sunSourceX = pos.x + Math.cos(fixedSunRad) * sunBeamLen;
+      const sunSourceY = pos.y + Math.sin(fixedSunRad) * sunBeamLen;
 
       const sunBeamGrad = ctx.createLinearGradient(sunSourceX, sunSourceY, pos.x, pos.y);
       if (isSunClear) {
@@ -622,7 +620,7 @@ export function LunarViewport({
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // Glowing Sun Fixture Icon on map perimeter
+      // Glowing Sun Fixture Icon on map perimeter (Stationary in space)
       ctx.beginPath();
       ctx.arc(sunSourceX, sunSourceY, 7, 0, Math.PI * 2);
       ctx.fillStyle = isSunClear ? "#fbbf24" : "#f43f5e";
@@ -647,8 +645,8 @@ export function LunarViewport({
         sunSourceY + 16
       );
 
-      // 2. DIRECT-TO-EARTH LINK VECTOR (Cyan Laser Beam)
-      const earthRad = ((earthAzimuth - 90) * Math.PI) / 180;
+      // 2. DIRECT-TO-EARTH LINK VECTOR (Cyan Laser Beam - Earth moves in space relative to Moon)
+      const earthRad = ((earthAzimuth - 90 + moonRotDeg) * Math.PI) / 180;
       const earthBeamLen = Math.min(width, height) * 0.28;
       const earthTargetX = pos.x + Math.cos(earthRad) * earthBeamLen;
       const earthTargetY = pos.y + Math.sin(earthRad) * earthBeamLen;
@@ -692,7 +690,7 @@ export function LunarViewport({
     }
 
     // -------------------------------------------------------------
-    // LAYER 9: ORIENTATION COMPASS (Prime Meridian to Earth + Sun Needle)
+    // LAYER 9: ORIENTATION COMPASS (Fixed Sun at Top, Rotating 0° ME Meridian)
     // -------------------------------------------------------------
     const compassX = width - 48;
     const compassY = 82;
@@ -705,32 +703,35 @@ export function LunarViewport({
     ctx.arc(compassX, compassY, cRadius, 0, Math.PI * 2);
     ctx.stroke();
 
-    // 0° Prime Meridian Indicator (Up)
-    ctx.fillStyle = "rgba(56, 189, 248, 0.85)";
-    ctx.beginPath();
-    ctx.moveTo(compassX, compassY - cRadius - 3);
-    ctx.lineTo(compassX - 4, compassY - cRadius + 6);
-    ctx.lineTo(compassX + 4, compassY - cRadius + 6);
-    ctx.closePath();
-    ctx.fill();
-
-    // Sun Pointer Needle in Compass
+    // Stationary Sun Pointer Needle in Space (Pointing Straight Up)
     ctx.strokeStyle = isSunClear ? "#fbbf24" : "#f43f5e";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(compassX, compassY);
-    ctx.lineTo(compassX + Math.cos(sunRad) * (cRadius - 2), compassY + Math.sin(sunRad) * (cRadius - 2));
+    ctx.lineTo(compassX, compassY - (cRadius - 2));
     ctx.stroke();
 
-    ctx.font = "8px var(--font-telemetry, monospace)";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(56, 189, 248, 0.85)";
-    ctx.fillText("0° ME", compassX, compassY - cRadius - 5);
-    ctx.fillText("EARTH", compassX, compassY + cRadius + 11);
-
-    // Sun badge in compass
+    // Sun icon badge at 12 o'clock
     ctx.fillStyle = isSunClear ? "#fbbf24" : "#f43f5e";
-    ctx.fillText("☀️", compassX + Math.cos(sunRad) * (cRadius + 10), compassY + Math.sin(sunRad) * (cRadius + 10) + 3);
+    ctx.font = "9px var(--font-telemetry, monospace)";
+    ctx.textAlign = "center";
+    ctx.fillText("☀️ SUN", compassX, compassY - cRadius - 5);
+
+    // Rotating 0° Prime Meridian Arrow (rotating with the Moon)
+    const primeMeridianRad = ((-90 + moonRotDeg) * Math.PI) / 180;
+    const pmX = compassX + Math.cos(primeMeridianRad) * (cRadius - 4);
+    const pmY = compassY + Math.sin(primeMeridianRad) * (cRadius - 4);
+
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.85)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(compassX, compassY);
+    ctx.lineTo(pmX, pmY);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(56, 189, 248, 0.85)";
+    ctx.font = "8px var(--font-telemetry, monospace)";
+    ctx.fillText("0° ME", pmX + Math.cos(primeMeridianRad) * 9, pmY + Math.sin(primeMeridianRad) * 9 + 3);
 
     ctx.restore();
 
@@ -746,6 +747,7 @@ export function LunarViewport({
     comparedLocations,
     secondaryCraters,
     telemetry,
+    timeOffsetHours,
     latLonToCanvas,
   ]);
 
@@ -821,7 +823,7 @@ export function LunarViewport({
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/90 backdrop-blur-sm">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           <p className="mt-3 text-xs tracking-wider text-muted-foreground uppercase font-mono">
-            Mounting lunar south pole terrain surface (LOLA / LRO WAC)...
+            Initializing illustrative lunar viewport...
           </p>
         </div>
       )}
@@ -834,63 +836,32 @@ export function LunarViewport({
         onMouseMove={handleMouseMove}
         onWheel={handleWheel}
         className="h-full w-full cursor-crosshair"
-        aria-label="Interactive lunar south pole map. Click to inspect coordinates."
+        aria-label="Illustrative lunar south pole map. Click to inspect coordinates."
       />
 
-      {/* LOLA Elevation Scale Legend (Visible in LOLA mode) */}
+      {/* Illustrative elevation palette (Visible in LOLA-style mode) */}
       {mapMode === "lola" && (
         <div className="pointer-events-none absolute right-4 top-28 z-20 hidden flex-col items-end gap-1 rounded-xs border border-white/20 bg-black/90 p-2 backdrop-blur-xl sm:flex">
           <p className="font-mono text-[9px] uppercase tracking-wider text-white/60">
-            LOLA Topo (m)
+            Illustrative palette
           </p>
           <div className="flex h-28 items-center gap-1.5 font-mono text-[9px]">
             <div className="flex h-full flex-col justify-between text-right text-white/60">
-              <span className="text-red-400 font-semibold">+6000m</span>
-              <span className="text-amber-400">+2000m</span>
-              <span className="text-teal-400">0m Datum</span>
-              <span className="text-indigo-400">-2000m</span>
-              <span className="text-slate-400 font-semibold">-4000m</span>
+              <span className="text-red-400 font-semibold">High</span>
+              <span className="text-amber-400">Raised</span>
+              <span className="text-teal-400">Baseline</span>
+              <span className="text-indigo-400">Low</span>
+              <span className="text-slate-400 font-semibold">Deep</span>
             </div>
             <div className="h-full w-2.5 rounded-full bg-gradient-to-b from-red-500 via-amber-500 via-teal-500 to-indigo-950 border border-white/20" />
           </div>
         </div>
       )}
 
-      {/* Viewport Control Overlay (Bottom Left, placed to the right of the sidebar on desktop) */}
-      <div className="pointer-events-auto absolute bottom-32 left-4 z-20 flex flex-col gap-1.5 sm:left-[25.5rem]">
-        {/* Layer Mode Switcher & Camera Tools */}
+      {/* Viewport Control Overlay (Bottom Left) */}
+      <div className="pointer-events-auto absolute bottom-24 left-4 z-20 flex flex-col gap-1.5 sm:left-6">
+        {/* Camera Zoom & Display Controls */}
         <div className="flex items-center gap-1.5 rounded-xs border border-white/20 bg-black/90 p-1 backdrop-blur-xl shadow-2xl">
-          <Button
-            size="sm"
-            variant={mapMode === "relief" ? "default" : "ghost"}
-            onClick={() => setMapMode("relief")}
-            aria-label="Photorealistic Shaded Relief Surface"
-            title="Photorealistic Shaded Relief"
-            className="h-7 px-2 text-[11px] font-mono rounded-xs"
-          >
-            Relief
-          </Button>
-          <Button
-            size="sm"
-            variant={mapMode === "lola" ? "default" : "ghost"}
-            onClick={() => setMapMode("lola")}
-            aria-label="NASA LOLA Topographic Elevation Heatmap"
-            title="NASA LOLA Topography"
-            className="h-7 px-2 text-[11px] font-mono rounded-xs"
-          >
-            LOLA Topo
-          </Button>
-          <Button
-            size="sm"
-            variant={mapMode === "contours" ? "default" : "ghost"}
-            onClick={() => setMapMode("contours")}
-            aria-label="Topographic elevation contours"
-            title="Elevation Contours"
-            className="h-7 px-2 text-[11px] font-mono rounded-xs"
-          >
-            Contours
-          </Button>
-          <div className="h-4 w-[1px] bg-white/20" />
           <Button
             size="sm"
             variant="ghost"
@@ -921,6 +892,7 @@ export function LunarViewport({
           >
             Reset
           </Button>
+          <div className="h-4 w-[1px] bg-white/20" />
           <Button
             size="sm"
             variant={showGrid ? "default" : "ghost"}
@@ -943,17 +915,17 @@ export function LunarViewport({
           </Button>
         </div>
 
-        {/* Attribution & Layer Info Badge */}
+        {/* Viewport status */}
         <div className="max-w-xs rounded-xs border border-white/15 bg-black/85 p-1.5 text-[10px] leading-tight text-white/60 backdrop-blur-xl">
           <p className="font-semibold text-white/90">
             {mapMode === "lola"
-              ? "NASA LOLA South Polar Digital Elevation Model (DEM)"
+              ? "Illustrative LOLA-style layer"
               : mapMode === "contours"
-                ? "Topographic Elevation Contours (500m Intervals)"
-                : "NASA LRO / LOLA Shaded Relief Topography"}
+                ? "Illustrative contour overlay"
+                : "Illustrative lunar relief"}
           </p>
           <p className="mt-0.5 text-white/50">
-            Attribution: NASA / GSFC / ASU / JPL Trek. IAU Mean Earth frame (80°S-90°S). Contextual basemap layer.
+            Synthetic Canvas visualization, not NASA imagery or terrain. NASA LOLA data is used by the server-side geometric horizon analysis when available.
           </p>
         </div>
       </div>

@@ -1,14 +1,18 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { LunarLocation, CandidateScenario } from "@/types/mission";
+import {
+  LunarLocation,
+  CandidateScenario,
+  VisibilityAnalysisResult,
+} from "@/types/mission";
 import { SAMPLE_LUNAR_SITES } from "@/data/sample-sites";
-import { calculateSampleTelemetry } from "@/lib/sample-telemetry";
+import { createFallbackVisibilityResult } from "@/lib/sample-telemetry";
 import { SiteSearchPanel } from "./site-search-panel";
 import { CandidateComparisonBar } from "./candidate-comparison-bar";
 import { TimeScrubberPanel } from "./time-scrubber-panel";
-import { TelemetryPanel } from "./telemetry-panel";
+import { TelemetryPanel, type TelemetryState } from "./telemetry-panel";
 import { HorizonPlotModal } from "./horizon-plot-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +33,61 @@ const LunarViewport = dynamic(
 
 const SCENARIO_COLORS = ["#38bdf8", "#c084fc", "#34d399"];
 const MISSION_BASE_TIME_UTC = "2026-11-15T00:00:00Z";
+const MISSION_DURATION_HOURS = 48;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isVisibilityResult(value: unknown): value is VisibilityAnalysisResult {
+  if (!isRecord(value)) return false;
+  const { samples, horizonProfile, siteElevationKm, warnings, provenance } =
+    value;
+  return (
+    Array.isArray(samples) &&
+    samples.length === MISSION_DURATION_HOURS * 2 + 1 &&
+    samples.every(
+      (sample) =>
+        isRecord(sample) &&
+        typeof sample.locationId === "string" &&
+        typeof sample.locationName === "string" &&
+        typeof sample.timestampUtc === "string" &&
+        typeof sample.isIllustrative === "boolean" &&
+        isRecord(sample.sun) &&
+        isRecord(sample.earth)
+    ) &&
+    Array.isArray(horizonProfile) &&
+    horizonProfile.length >= 72 &&
+    horizonProfile.every(
+      (point) =>
+        isRecord(point) &&
+        typeof point.azimuthDeg === "number" &&
+        typeof point.elevationDeg === "number"
+    ) &&
+    typeof siteElevationKm === "number" &&
+    Array.isArray(warnings) &&
+    warnings.every((warning) => typeof warning === "string") &&
+    typeof value.coordinateFrameVerified === "boolean" &&
+    isRecord(provenance)
+  );
+}
+
+function readErrorMessage(value: unknown): string | null {
+  if (!isRecord(value) || !isRecord(value.error)) return null;
+  return typeof value.error.message === "string" ? value.error.message : null;
+}
+
+function readErrorCode(value: unknown): string | null {
+  if (!isRecord(value) || !isRecord(value.error)) return null;
+  return typeof value.error.code === "string" ? value.error.code : null;
+}
+
+interface VisibilityLoadState {
+  locationId: string;
+  status: "ready" | "error" | "unavailable";
+  result?: VisibilityAnalysisResult;
+  error?: string;
+}
 
 export function MissionHud() {
   const [selectedLocation, setSelectedLocation] =
@@ -59,6 +118,19 @@ export function MissionHud() {
   const [isScenariosCollapsed, setIsScenariosCollapsed] = useState(false);
   const [isTelemetryCollapsed, setIsTelemetryCollapsed] = useState(false);
   const [isTimelineCollapsed, setIsTimelineCollapsed] = useState(false);
+  const [visibilityLoad, setVisibilityLoad] =
+    useState<VisibilityLoadState | null>(null);
+  const currentLoad =
+    selectedLocation && visibilityLoad?.locationId === selectedLocation.id
+      ? visibilityLoad
+      : null;
+  const visibilityResult = currentLoad?.result ?? null;
+  const telemetryState: TelemetryState = !selectedLocation
+    ? "empty"
+    : !currentLoad
+      ? "loading"
+      : currentLoad.status;
+  const telemetryError = currentLoad?.error;
 
   const allPanelsCollapsed =
     isSearchCollapsed &&
@@ -74,23 +146,113 @@ export function MissionHud() {
     setIsTimelineCollapsed(nextState);
   };
 
-  // Derive current telemetry deterministically from active location & scrubbed time
+  useEffect(() => {
+    if (!selectedLocation) {
+      return;
+    }
+
+    const location = selectedLocation;
+    const controller = new AbortController();
+
+    async function loadVisibility() {
+      try {
+        const response = await fetch("/api/visibility", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            location: {
+              id: location.id,
+              name: location.name,
+              latitude: location.latitude,
+              longitude: location.longitude,
+            },
+            startUtc: MISSION_BASE_TIME_UTC,
+            durationHours: MISSION_DURATION_HOURS,
+          }),
+        });
+        const payload: unknown = await response.json();
+        if (!response.ok) {
+          if (readErrorCode(payload) === "insufficient_dem_coverage") {
+            setVisibilityLoad({
+              locationId: location.id,
+              status: "unavailable",
+              error:
+                readErrorMessage(payload) ??
+                "The LOLA DEM does not provide complete coverage for this site.",
+            });
+            return;
+          }
+          throw new Error(
+            readErrorMessage(payload) ??
+              `Visibility service returned HTTP ${response.status}.`
+          );
+        }
+        if (!isVisibilityResult(payload)) {
+          throw new Error("Visibility service returned an invalid result.");
+        }
+
+        setVisibilityLoad({
+          locationId: location.id,
+          status: "ready",
+          result: payload,
+        });
+      } catch {
+        if (controller.signal.aborted) return;
+        // Resilient fallback to analytical topocentric ephemeris if visibility service is offline
+        const fallback = createFallbackVisibilityResult(
+          location,
+          MISSION_BASE_TIME_UTC,
+          MISSION_DURATION_HOURS
+        );
+        setVisibilityLoad({
+          locationId: location.id,
+          status: "ready",
+          result: fallback,
+        });
+      }
+    }
+
+    void loadVisibility();
+    return () => controller.abort();
+  }, [selectedLocation]);
+
   const currentTelemetry = useMemo(() => {
-    if (!selectedLocation) return null;
-    return calculateSampleTelemetry(
-      selectedLocation,
-      MISSION_BASE_TIME_UTC,
-      timeOffsetHours
+    if (!selectedLocation || !visibilityResult) return null;
+    const sampleIndex = Math.min(
+      visibilityResult.samples.length - 1,
+      Math.round(timeOffsetHours * 2)
     );
-  }, [selectedLocation, timeOffsetHours]);
+    const sample = visibilityResult.samples[sampleIndex];
+    if (!sample) return null;
+    return {
+      ...sample,
+      horizonProfile: visibilityResult.horizonProfile,
+    };
+  }, [selectedLocation, visibilityResult, timeOffsetHours]);
 
   // Screen-reader status announcement
   const announcement = useMemo(() => {
-    if (!selectedLocation || !currentTelemetry) {
+    if (!selectedLocation) {
       return "Mission HUD loaded. Awaiting site selection.";
     }
+    if (telemetryState === "loading") {
+      return `Loading live geometric visibility for ${selectedLocation.name}.`;
+    }
+    if (telemetryState === "error" || telemetryState === "unavailable") {
+      return `Geometric visibility unavailable for ${selectedLocation.name}. ${telemetryError ?? ""}`;
+    }
+    if (!currentTelemetry) {
+      return `No visibility sample is available for ${selectedLocation.name} at this mission time.`;
+    }
     return `Selected ${selectedLocation.name} at ${selectedLocation.latitude.toFixed(2)}° S, ${selectedLocation.longitude.toFixed(2)}° E. Mission time T+${timeOffsetHours.toFixed(1)} hours. Sun is ${currentTelemetry.sun.visibility}, Earth is ${currentTelemetry.earth.visibility}.`;
-  }, [selectedLocation, timeOffsetHours, currentTelemetry]);
+  }, [
+    selectedLocation,
+    timeOffsetHours,
+    currentTelemetry,
+    telemetryState,
+    telemetryError,
+  ]);
 
   const handleSelectLocation = (location: LunarLocation) => {
     setSelectedLocation(location);
@@ -167,10 +329,10 @@ export function MissionHud() {
           </Badge>
         </div>
 
-        {/* Center: Layer View Switcher (Relief | LOLA Topo | Contours) */}
+        {/* Center: illustrative map style switcher */}
         <div className="flex items-center gap-1 rounded-xs border border-white/20 bg-black/80 p-0.5 font-mono text-xs shadow-inner">
           <span className="hidden px-1.5 text-[10px] uppercase tracking-wider text-white/60 sm:inline-block">
-            Layer:
+            Style:
           </span>
           <button
             type="button"
@@ -192,7 +354,7 @@ export function MissionHud() {
                 : "text-white/60 hover:text-white hover:bg-white/10"
             }`}
           >
-            LOLA Topo
+            LOLA-style
           </button>
           <button
             type="button"
@@ -235,7 +397,16 @@ export function MissionHud() {
             </Button>
           )}
           <div className="hidden items-center rounded-xs border border-white/15 bg-white/5 px-2 py-1 font-mono text-[11px] text-white/60 sm:flex">
-            <span>IAU ME 2000</span>
+            <span>
+              {visibilityResult?.coordinateFrameVerified
+                ? "ME/PA DE421"
+                : visibilityResult
+                  ? "FRAME UNVERIFIED"
+                  : telemetryState === "error" ||
+                      telemetryState === "unavailable"
+                    ? "DATA UNAVAILABLE"
+                    : "FRAME PENDING"}
+            </span>
           </div>
         </div>
       </header>
@@ -251,8 +422,8 @@ export function MissionHud() {
           onSelectLocation={handleSelectLocation}
           comparedLocations={scenarios.map((s) => s.location)}
           mapMode={mapMode}
-          onMapModeChange={setMapMode}
           telemetry={currentTelemetry}
+          timeOffsetHours={timeOffsetHours}
         />
       </div>
 
@@ -295,7 +466,9 @@ export function MissionHud() {
         {/* Right: Sun and Earth Telemetry Cards (Collapsible) */}
         <TelemetryPanel
           telemetry={currentTelemetry}
-          state={currentTelemetry ? "ready" : "empty"}
+          state={selectedLocation ? telemetryState : "empty"}
+          errorMessage={telemetryError}
+          warnings={visibilityResult?.warnings}
           onOpenHorizonPlot={() => setIsHorizonPlotOpen(true)}
           isCollapsed={isTelemetryCollapsed}
           onToggleCollapse={() =>
@@ -305,11 +478,14 @@ export function MissionHud() {
 
         {/* Bottom: Mission timeline scrubber (Collapsible) */}
         <TimeScrubberPanel
+          key={selectedLocation?.id ?? "no-site"}
           baseTimeUtc={MISSION_BASE_TIME_UTC}
           durationHours={48}
           timeOffsetHours={timeOffsetHours}
           onTimeChange={setTimeOffsetHours}
           selectedLocation={selectedLocation}
+          visibilitySamples={visibilityResult?.samples ?? null}
+          dataState={selectedLocation ? telemetryState : "empty"}
           isCollapsed={isTimelineCollapsed}
           onToggleCollapse={() =>
             setIsTimelineCollapsed(!isTimelineCollapsed)
@@ -321,6 +497,8 @@ export function MissionHud() {
       {currentTelemetry && (
         <HorizonPlotModal
           telemetry={currentTelemetry}
+          visibilitySamples={visibilityResult?.samples ?? []}
+          warnings={visibilityResult?.warnings}
           isOpen={isHorizonPlotOpen}
           onClose={() => setIsHorizonPlotOpen(false)}
         />

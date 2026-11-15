@@ -42,6 +42,25 @@ export interface SiteTelemetry {
   earth: CelestialBodyTelemetry;
   bothVisible: boolean;
   horizonProfile: HorizonSamplePoint[];
-  coordinateSystem: "IAU/IAG Moon Mean Earth / Polar Axis (ME)";
-  isIllustrative: true;
+  coordinateSystem: string;
+  isIllustrative: boolean;
+  ephemerisSource?: "live-spice" | "analytical-fallback" | "illustrative";
+}
+
+export type VisibilitySample = Omit<SiteTelemetry, "horizonProfile">;
+
+export interface VisibilityAnalysisResult {
+  samples: VisibilitySample[];
+  horizonProfile: HorizonSamplePoint[];
+  siteElevationKm: number;
+  coordinateFrameVerified: boolean;
+  warnings: string[];
+  provenance: {
+    terrainProduct: string;
+    terrainProductVersion: string;
+    ephemeris: string;
+    timeScale: string;
+    terrainSamplingMeters: number;
+    horizonAzimuthStepDeg: number;
+  };
 }

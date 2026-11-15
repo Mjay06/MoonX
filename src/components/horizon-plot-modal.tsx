@@ -1,24 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
-import { SiteTelemetry } from "@/types/mission";
+import React, { useState, useMemo } from "react";
+import { SiteTelemetry, VisibilitySample } from "@/types/mission";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface HorizonPlotModalProps {
   telemetry: SiteTelemetry;
+  visibilitySamples: VisibilitySample[];
+  warnings?: string[];
   isOpen: boolean;
   onClose: () => void;
 }
 
 export function HorizonPlotModal({
   telemetry,
+  visibilitySamples,
+  warnings = [],
   isOpen,
   onClose,
 }: HorizonPlotModalProps) {
   const [viewMode, setViewMode] = useState<"plot" | "table">("plot");
-
-  if (!isOpen) return null;
+  const [showSunArc, setShowSunArc] = useState(true);
 
   const { horizonProfile, sun, earth, locationName, timestampUtc } = telemetry;
 
@@ -29,13 +32,24 @@ export function HorizonPlotModal({
   const plotWidth = svgWidth - padding.left - padding.right;
   const plotHeight = svgHeight - padding.top - padding.bottom;
 
-  // Elevation range: -2° to +10°
-  const minElev = -2;
-  const maxElev = 10;
+  const minElev = -10;
+  const maxElev = 20;
 
   const azToX = (az: number) => padding.left + ((az % 360) / 360) * plotWidth;
   const elToY = (el: number) =>
     padding.top + plotHeight - ((el - minElev) / (maxElev - minElev)) * plotHeight;
+
+  const sunTrajectory = useMemo(() => {
+    return visibilitySamples.map((sample, index) => ({
+      hour: index * 0.5,
+      azimuthDeg: sample.sun.azimuthDeg,
+      elevationDeg: sample.sun.elevationDeg,
+      horizonMaskDeg: sample.sun.horizonMaskDeg,
+      visibility: sample.sun.visibility,
+    }));
+  }, [visibilitySamples]);
+
+  if (!isOpen) return null;
 
   // Build SVG path string for horizon profile
   const sortedProfile = [...horizonProfile].sort((a, b) => a.azimuthDeg - b.azimuthDeg);
@@ -70,8 +84,8 @@ export function HorizonPlotModal({
               >
                 360° Local Horizon Profile & Celestial Sightlines
               </h2>
-              <Badge variant="illustrative" className="border-white/20 bg-white/5 text-[#00e5ff] rounded-xs font-mono text-[9px]">
-                Illustrative DEM
+              <Badge variant={telemetry.isIllustrative ? "illustrative" : "outline"} className="border-white/20 bg-white/5 text-[#00e5ff] rounded-xs font-mono text-[9px]">
+                {telemetry.isIllustrative ? "Illustrative DEM" : "NASA LOLA DEM"}
               </Badge>
             </div>
             <p className="mt-0.5 font-mono text-xs text-white/60">
@@ -80,7 +94,30 @@ export function HorizonPlotModal({
             </p>
           </div>
 
+          {warnings.length > 0 && (
+            <div className="mt-3 rounded-xs border border-amber-500/30 bg-amber-950/20 p-2 text-[10px] leading-relaxed text-amber-200/90">
+              {warnings.map((warning) => (
+                <p key={warning}>{warning}</p>
+              ))}
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
+            {viewMode === "plot" && sunTrajectory.length > 0 && (
+              <Button
+                variant={showSunArc ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowSunArc(!showSunArc)}
+                className={`h-6 px-2 text-[11px] font-mono rounded-xs border ${
+                  showSunArc
+                    ? "border-amber-400 bg-amber-500/20 text-amber-300"
+                    : "border-white/20 text-white/70 hover:border-amber-400 hover:text-amber-300"
+                }`}
+                title="Toggle 48-hour solar trajectory arc across the mountain skyline"
+              >
+                ☀ 48h Solar Arc
+              </Button>
+            )}
             <div className="rounded-sm border border-white/20 bg-white/5 p-0.5 flex gap-0.5">
               <Button
                 variant={viewMode === "plot" ? "default" : "ghost"}
@@ -110,6 +147,17 @@ export function HorizonPlotModal({
           </div>
         </div>
 
+        {/* Beginner-friendly explanation banner */}
+        <div className="mt-3 flex items-start gap-2.5 rounded-xs border border-[#00e5ff]/20 bg-[#00e5ff]/5 p-2.5 text-xs text-white/80">
+          <span className="text-base select-none">💡</span>
+          <div>
+            <p className="font-semibold text-white">How to read this skyline:</p>
+            <p className="text-[11px] text-white/70 leading-relaxed">
+              The terrain profile is a sampled geometric horizon. Sun or Earth above it indicates geometric visibility only; it does not estimate solar power or guarantee a communications link.
+            </p>
+          </div>
+        </div>
+
         {viewMode === "plot" ? (
           <div className="mt-4">
             {/* SVG Plot */}
@@ -120,7 +168,7 @@ export function HorizonPlotModal({
                 aria-label="Panoramic 360-degree terrain elevation mask against Sun and Earth apparent elevations"
               >
                 {/* Horizontal grid lines for elevations */}
-                {[-2, 0, 2, 4, 6, 8, 10].map((el) => {
+                {[-10, -5, 0, 5, 10, 15, 20].map((el) => {
                   const y = elToY(el);
                   return (
                     <g key={el}>
@@ -188,6 +236,67 @@ export function HorizonPlotModal({
                 <path d={fillD} fill="rgba(30, 41, 59, 0.7)" />
                 {/* Terrain Horizon Line */}
                 <path d={pathD} fill="none" stroke="rgba(148, 163, 184, 0.9)" strokeWidth="2" />
+
+                {/* 48-Hour Sun Trajectory Arc across Skyline */}
+                {showSunArc && sunTrajectory.length > 1 && (
+                  <g aria-label="48-hour solar trajectory arc">
+                    {sunTrajectory.map((pt, idx) => {
+                      if (idx === 0) return null;
+                      const prev = sunTrajectory[idx - 1];
+                      // Avoid wraparound line if az jumps across 0/360 boundary
+                      if (Math.abs(pt.azimuthDeg - prev.azimuthDeg) > 40) return null;
+                      return (
+                        <line
+                          key={`arc-line-${idx}`}
+                          x1={azToX(prev.azimuthDeg)}
+                          y1={elToY(prev.elevationDeg)}
+                          x2={azToX(pt.azimuthDeg)}
+                          y2={elToY(pt.elevationDeg)}
+                          stroke={
+                            pt.visibility === "CLEAR"
+                              ? "rgba(251, 191, 36, 0.55)"
+                              : pt.visibility === "BLOCKED"
+                                ? "rgba(244, 63, 94, 0.5)"
+                                : "rgba(148, 163, 184, 0.6)"
+                          }
+                          strokeWidth="2.5"
+                          strokeDasharray={pt.visibility === "CLEAR" ? "none" : "3,3"}
+                        />
+                      );
+                    })}
+                    {sunTrajectory.map((pt, idx) => (
+                      <circle
+                        key={`arc-pt-${idx}`}
+                        cx={azToX(pt.azimuthDeg)}
+                        cy={elToY(pt.elevationDeg)}
+                        r={pt.hour % 12 === 0 ? 3.5 : 1.8}
+                        fill={
+                          pt.visibility === "CLEAR"
+                            ? "#fbbf24"
+                            : pt.visibility === "BLOCKED"
+                              ? "#f43f5e"
+                              : "#94a3b8"
+                        }
+                        opacity={0.85}
+                      />
+                    ))}
+                    {sunTrajectory
+                      .filter((pt) => pt.hour % 12 === 0)
+                      .map((pt) => (
+                        <text
+                          key={`arc-lbl-${pt.hour}`}
+                          x={azToX(pt.azimuthDeg)}
+                          y={elToY(pt.elevationDeg) + 12}
+                          fill="rgba(251, 191, 36, 0.85)"
+                          fontSize="8.5"
+                          fontFamily="monospace"
+                          textAnchor="middle"
+                        >
+                          T+{pt.hour}h
+                        </text>
+                      ))}
+                  </g>
+                )}
 
                 {/* Sun Marker */}
                 <g>
@@ -266,25 +375,54 @@ export function HorizonPlotModal({
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-2 w-4 bg-slate-600 inline-block rounded-sm" />
-                  Topographic Horizon Mask
+                  Terrain Horizon
                 </span>
+                {showSunArc && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1 w-4 bg-amber-400 inline-block rounded-xs" />
+                    48h Sun Arc (Gold=Clear, Red=Blocked)
+                  </span>
+                )}
               </div>
-              <span>Angles: Azimuth 0°–360° (N=0°, E=90°), Elevation -2° to +10°</span>
+              <span>Angles: Azimuth 0°–360° (N=0°, E=90°), Elevation -10° to +20°</span>
             </div>
           </div>
         ) : (
           /* Accessible Horizon Data Table */
-          <div className="mt-4 max-h-72 overflow-y-auto rounded-xs border border-white/20 bg-black/90">
-            <table className="w-full text-left font-mono text-xs" aria-label="360-degree horizon profile samples">
-              <thead className="bg-black/95 text-[10px] text-white/60 uppercase sticky top-0 border-b border-white/20">
-                <tr>
-                  <th className="p-2 pl-3">Azimuth (Deg)</th>
-                  <th className="p-2">Cardinal Sector</th>
-                  <th className="p-2">Horizon Mask (Deg)</th>
-                  <th className="p-2">Sun Clearance</th>
-                  <th className="p-2 pr-3">Earth Clearance</th>
-                </tr>
-              </thead>
+          <div className="mt-4">
+            {/* Quick Summary of Current Targets */}
+            <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div className="rounded-xs border border-amber-500/30 bg-amber-950/20 p-2.5">
+                <p className="text-[10px] uppercase font-bold text-amber-300">☀️ Sun Direction ({sun.azimuthDeg}° Heading)</p>
+                <p className="mt-0.5 font-mono text-[11px] text-white">
+                  Terrain horizon: <span className="text-amber-200">{sun.horizonMaskDeg}°</span> • Sun elevation: <span className="text-white">{sun.elevationDeg}°</span>
+                </p>
+                <p className={`mt-0.5 font-bold text-[11px] ${sun.visibility === "CLEAR" ? "text-emerald-400" : sun.visibility === "BLOCKED" ? "text-rose-400" : "text-amber-300"}`}>
+                  {sun.visibility}: {sun.marginDeg > 0 ? "+" : ""}{sun.marginDeg}° relative to horizon
+                </p>
+              </div>
+              <div className="rounded-xs border border-sky-500/30 bg-sky-950/20 p-2.5">
+                <p className="text-[10px] uppercase font-bold text-sky-300">🌍 Earth Direction ({earth.azimuthDeg}° Heading)</p>
+                <p className="mt-0.5 font-mono text-[11px] text-white">
+                  Terrain horizon: <span className="text-sky-200">{earth.horizonMaskDeg}°</span> • Earth elevation: <span className="text-white">{earth.elevationDeg}°</span>
+                </p>
+                <p className={`mt-0.5 font-bold text-[11px] ${earth.visibility === "CLEAR" ? "text-emerald-400" : earth.visibility === "BLOCKED" ? "text-rose-400" : "text-amber-300"}`}>
+                  {earth.visibility}: {earth.marginDeg > 0 ? "+" : ""}{earth.marginDeg}° relative to horizon
+                </p>
+              </div>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto rounded-xs border border-white/20 bg-black/90">
+              <table className="w-full text-left font-mono text-xs" aria-label="360-degree horizon profile samples">
+                <thead className="bg-black/95 text-[10px] text-white/60 uppercase sticky top-0 border-b border-white/20">
+                  <tr>
+                    <th className="p-2 pl-3">Compass Heading</th>
+                    <th className="p-2">Direction</th>
+                    <th className="p-2">Terrain Horizon</th>
+                    <th className="p-2">Sun Visibility</th>
+                    <th className="p-2 pr-3">Earth Visibility</th>
+                  </tr>
+                </thead>
               <tbody className="divide-y divide-white/10 bg-black/80">
                 {sortedProfile.map((pt) => {
                   const nearSun = Math.abs(pt.azimuthDeg - sun.azimuthDeg) <= 2.5;
@@ -319,7 +457,7 @@ export function HorizonPlotModal({
                       </td>
                       <td className="p-2">
                         {nearSun ? (
-                          <span className={sun.marginDeg > 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                          <span className={sun.visibility === "CLEAR" ? "text-emerald-400 font-bold" : sun.visibility === "BLOCKED" ? "text-rose-400 font-bold" : "text-amber-300 font-bold"}>
                             ☀ {sun.marginDeg > 0 ? "+" : ""}{sun.marginDeg}° ({sun.visibility})
                           </span>
                         ) : (
@@ -328,7 +466,7 @@ export function HorizonPlotModal({
                       </td>
                       <td className="p-2 pr-3">
                         {nearEarth ? (
-                          <span className={earth.marginDeg > 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                          <span className={earth.visibility === "CLEAR" ? "text-emerald-400 font-bold" : earth.visibility === "BLOCKED" ? "text-rose-400 font-bold" : "text-amber-300 font-bold"}>
                             ⊕ {earth.marginDeg > 0 ? "+" : ""}{earth.marginDeg}° ({earth.visibility})
                           </span>
                         ) : (
@@ -341,11 +479,12 @@ export function HorizonPlotModal({
               </tbody>
             </table>
           </div>
-        )}
+        </div>
+      )}
 
         <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
           <p className="text-[10px] text-white/50">
-            Calculations assume topocentric surface observer (+2m mast) on Moon Mean Earth / Polar Axis sphere.
+            LOLA elevations are sampled every 240 m. NASA NAIF SPICE frame alignment is verified against the MOON_ME datum; geometric visibility is not a power or link estimate.
           </p>
           <Button variant="outline" size="sm" onClick={onClose} className="h-7 px-3 text-xs border-white/20 text-white hover:border-[#00e5ff] hover:text-[#00e5ff]">
             Close
