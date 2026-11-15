@@ -176,8 +176,8 @@ export function TimeScrubberPanel({
           <div className="relative mb-2 flex flex-col gap-1.5 text-[10px] font-mono">
             {/* Track 1: DUAL FEASIBLE WINDOW (Power + Comms Simultaneously) */}
             <div className="flex items-center gap-2">
-              <span className="w-16 shrink-0 font-semibold text-[#00e5ff] text-right">
-                Dual LOS:
+              <span className="w-20 shrink-0 font-semibold text-[#00e5ff] text-right">
+                Safe Landing:
               </span>
               <div className="relative h-3 w-full rounded-xs bg-black/80 overflow-hidden flex border border-white/20">
                 {feasibilityProfile.steps.map((s, idx) => (
@@ -189,7 +189,7 @@ export function TimeScrubberPanel({
                         ? "bg-[#00e5ff] shadow-[0_0_8px_rgba(0,229,255,0.7)]"
                         : "bg-slate-900/60"
                     }`}
-                    title={`T+${s.hour}h: ${s.isBothClear ? "Concurrent Power & DTE Feasible" : "No Dual Coverage"}`}
+                    title={`T+${s.hour}h: ${s.isBothClear ? "Full Safety: Power & Comms Available" : "Unsafe: Missing Power or Radio"}`}
                   />
                 ))}
               </div>
@@ -197,8 +197,8 @@ export function TimeScrubberPanel({
 
             {/* Track 2: SOLAR POWER WINDOW (Sun Line-of-Sight) */}
             <div className="flex items-center gap-2">
-              <span className="w-16 shrink-0 font-semibold text-amber-300 text-right">
-                Sun LOS:
+              <span className="w-20 shrink-0 font-semibold text-amber-300 text-right">
+                Sunlight:
               </span>
               <div className="relative h-3 w-full rounded-xs bg-black/80 overflow-hidden flex border border-white/20">
                 {feasibilityProfile.steps.map((s, idx) => (
@@ -208,7 +208,7 @@ export function TimeScrubberPanel({
                     className={`h-full ${
                       s.isSunClear ? "bg-amber-400/85" : "bg-rose-950/70"
                     }`}
-                    title={`T+${s.hour}h: ${s.isSunClear ? "Solar Clear (Power Generation)" : "Solar Blocked by Crater Wall"}`}
+                    title={`T+${s.hour}h: ${s.isSunClear ? "Sunlight Available (Solar Power)" : "Shadowed by Crater Wall"}`}
                   />
                 ))}
               </div>
@@ -216,8 +216,8 @@ export function TimeScrubberPanel({
 
             {/* Track 3: DIRECT-TO-EARTH LINK WINDOW (Earth Line-of-Sight) */}
             <div className="flex items-center gap-2">
-              <span className="w-16 shrink-0 font-semibold text-sky-300 text-right">
-                Earth DTE:
+              <span className="w-20 shrink-0 font-semibold text-sky-300 text-right">
+                Radio to Earth:
               </span>
               <div className="relative h-3 w-full rounded-xs bg-black/80 overflow-hidden flex border border-white/20">
                 {feasibilityProfile.steps.map((s, idx) => (
@@ -227,7 +227,7 @@ export function TimeScrubberPanel({
                     className={`h-full ${
                       s.isEarthClear ? "bg-sky-400/85" : "bg-rose-950/70"
                     }`}
-                    title={`T+${s.hour}h: ${s.isEarthClear ? "Earth DTE Clear (Telemetry Link)" : "Earth Blocked by Terrain Rim"}`}
+                    title={`T+${s.hour}h: ${s.isEarthClear ? "Earth Radio Connected (Telemetry)" : "Radio Blocked by Mountain Rim"}`}
                   />
                 ))}
               </div>
@@ -237,7 +237,7 @@ export function TimeScrubberPanel({
             <div
               className="pointer-events-none absolute top-0 bottom-0 w-[2px] bg-[#00e5ff] shadow-[0_0_8px_rgba(0,229,255,1)] z-10 transition-all duration-75"
               style={{
-                left: `calc(4.5rem + (100% - 4.5rem) * ${scrubProgressPct / 100})`,
+                left: `calc(5.5rem + (100% - 5.5rem) * ${scrubProgressPct / 100})`,
               }}
             />
           </div>
@@ -256,16 +256,16 @@ export function TimeScrubberPanel({
           </div>
 
           {/* Timeline Axis Hour Ticks */}
-          <div className="flex justify-between pl-18 pr-1 font-mono text-[9px] text-white/50 mt-0.5">
-            <span>T+0h</span>
+          <div className="flex justify-between pl-22 pr-1 font-mono text-[9px] text-white/50 mt-0.5">
+            <span>T+0h (Start)</span>
             <span>T+6h</span>
             <span>T+12h</span>
             <span>T+18h</span>
-            <span>T+24h</span>
+            <span>T+24h (Day 1)</span>
             <span>T+30h</span>
             <span>T+36h</span>
             <span>T+42h</span>
-            <span>T+48h</span>
+            <span>T+48h (End)</span>
           </div>
 
           {/* Time Controls Bar & Legend */}
@@ -334,19 +334,19 @@ export function TimeScrubberPanel({
             <div className="hidden flex-wrap items-center gap-3 font-mono text-[10px] text-white/60 sm:flex">
               <span className="flex items-center gap-1">
                 <span className="h-2 w-3 rounded-xs bg-[#00e5ff]" />
-                <span>Dual LOS (Landing/EVA)</span>
+                <span>Safe to Land (Both Active)</span>
               </span>
               <span className="flex items-center gap-1">
                 <span className="h-2 w-3 rounded-xs bg-amber-400" />
-                <span>Sun LOS (Power)</span>
+                <span>Sunlight (Power)</span>
               </span>
               <span className="flex items-center gap-1">
                 <span className="h-2 w-3 rounded-xs bg-sky-400" />
-                <span>Earth DTE (Comms)</span>
+                <span>Earth Radio (Communications)</span>
               </span>
               <span className="flex items-center gap-1">
                 <span className="h-2 w-3 rounded-xs bg-rose-950 border border-rose-800" />
-                <span>Occulted</span>
+                <span>Blocked by Mountain</span>
               </span>
             </div>
           </div>

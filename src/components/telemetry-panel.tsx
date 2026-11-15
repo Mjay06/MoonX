@@ -254,34 +254,38 @@ export function TelemetryPanel({
         <span className="font-semibold text-[#00e5ff]">{timestampUtc}</span>
       </div>
 
-      {/* Joint feasibility banner */}
+      {/* Joint feasibility banner (Plain English) */}
       <div
-        className={`mt-3 flex items-center justify-between rounded-xs border p-2.5 ${
+        className={`mt-3 flex items-center justify-between rounded-xs border p-3 ${
           bothVisible
-            ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-300"
+            ? "border-emerald-500/50 bg-emerald-950/40 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.15)]"
             : sun.visibility === "CLEAR" || earth.visibility === "CLEAR"
               ? "border-[#00e5ff]/40 bg-[#00e5ff]/10 text-[#00e5ff]"
-              : "border-rose-500/40 bg-rose-950/25 text-rose-300"
+              : "border-rose-500/40 bg-rose-950/30 text-rose-300"
         }`}
       >
-        <div className="flex items-center gap-2">
-          <span className="text-base font-bold" aria-hidden="true">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xs bg-black/40 text-base font-bold" aria-hidden="true">
             {bothVisible ? "✓" : sun.visibility === "CLEAR" || earth.visibility === "CLEAR" ? "◐" : "✕"}
           </span>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide">
+            <p className="text-xs font-bold uppercase tracking-wider">
               {bothVisible
-                ? "Dual Line-of-Sight Feasible"
+                ? "Safe to Land: Full Power & Communications"
                 : sun.visibility === "CLEAR"
-                  ? "Solar Generation Only"
+                  ? "Solar Power Only (Radio Blocked)"
                   : earth.visibility === "CLEAR"
-                    ? "DTE Communication Only"
-                    : "No Line-of-Sight Available"}
+                    ? "Radio Link Active (In Shadow)"
+                    : "Unsafe: Obscured by Terrain Rim"}
             </p>
-            <p className="text-[10px] opacity-80">
+            <p className="text-[10px] text-white/70 leading-snug mt-0.5">
               {bothVisible
-                ? "Concurrent solar power + Direct-To-Earth communications"
-                : "Partial or obstructed visibility at current mission time"}
+                ? "Simultaneous solar power generation and direct communications with Earth."
+                : sun.visibility === "CLEAR"
+                  ? "Sunlight reaches solar panels, but the crater rim blocks the line to Earth."
+                  : earth.visibility === "CLEAR"
+                    ? "Direct antenna line-of-sight to Earth, but lander is in shadow."
+                    : "Both sunlight and radio links are obstructed by surrounding mountain walls."}
             </p>
           </div>
         </div>
@@ -298,7 +302,7 @@ export function TelemetryPanel({
               ☀
             </span>
             <span className="text-xs font-bold uppercase tracking-wider text-amber-200">
-              Sun (Solar Power)
+              Sunlight (Solar Power)
             </span>
           </div>
           {getStatusBadge(sun.visibility)}
@@ -306,22 +310,22 @@ export function TelemetryPanel({
 
         <dl className="mt-2.5 grid grid-cols-2 gap-x-2 gap-y-1.5 font-mono text-xs">
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Azimuth</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Sun Direction</dt>
             <dd className="font-semibold text-white">{sun.azimuthDeg}° (from N)</dd>
           </div>
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Elevation</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Height in Sky</dt>
             <dd className="font-semibold text-white">
               {sun.elevationDeg > 0 ? "+" : ""}
               {sun.elevationDeg}°
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Horizon Mask</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Crater Wall Height</dt>
             <dd className="text-white/70">{sun.horizonMaskDeg > 0 ? "+" : ""}{sun.horizonMaskDeg}°</dd>
           </div>
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Clearance Margin</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Safety Clearance</dt>
             <dd
               className={
                 sun.marginDeg > 0.25
@@ -340,9 +344,9 @@ export function TelemetryPanel({
         {/* Visual Sun Horizon Clearance Gauge */}
         <div className="mt-2.5 pt-2 border-t border-amber-500/20">
           <div className="flex justify-between font-mono text-[9px] text-amber-200/80 mb-1">
-            <span>Terrain Mask: {sun.horizonMaskDeg > 0 ? "+" : ""}{sun.horizonMaskDeg}°</span>
+            <span>Rim Height: {sun.horizonMaskDeg > 0 ? "+" : ""}{sun.horizonMaskDeg}°</span>
             <span className={sun.visibility === "CLEAR" ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>
-              {sun.visibility === "CLEAR" ? `▲ ${sun.marginDeg > 0 ? "+" : ""}${sun.marginDeg}° Clear` : `▼ ${sun.marginDeg}° Blocked`}
+              {sun.visibility === "CLEAR" ? `▲ ${sun.marginDeg > 0 ? "+" : ""}${sun.marginDeg}° (Sun Above Rim)` : `▼ ${sun.marginDeg}° (Behind Rim)`}
             </span>
           </div>
           <div className="relative h-2 w-full rounded-xs bg-black/90 overflow-hidden flex border border-white/20">
@@ -354,10 +358,10 @@ export function TelemetryPanel({
             />
           </div>
           <div className="relative mt-1 flex justify-between font-mono text-[8px] text-white/50">
-            <span>-2°</span>
-            <span>0° Datum</span>
+            <span>-2° Horizon</span>
+            <span>0° Level</span>
             <span>+4°</span>
-            <span>+8°</span>
+            <span>+8° High</span>
             {/* Sun position marker */}
             <span
               className="absolute -top-3.5 -translate-x-1/2 text-xs"
@@ -381,7 +385,7 @@ export function TelemetryPanel({
               ⊕
             </span>
             <span className="text-xs font-bold uppercase tracking-wider text-sky-200">
-              Earth (Direct Link)
+              Earth Link (Direct Radio)
             </span>
           </div>
           {getStatusBadge(earth.visibility)}
@@ -389,22 +393,22 @@ export function TelemetryPanel({
 
         <dl className="mt-2.5 grid grid-cols-2 gap-x-2 gap-y-1.5 font-mono text-xs">
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Azimuth</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Earth Direction</dt>
             <dd className="font-semibold text-white">{earth.azimuthDeg}° (from N)</dd>
           </div>
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Elevation</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Height in Sky</dt>
             <dd className="font-semibold text-white">
               {earth.elevationDeg > 0 ? "+" : ""}
               {earth.elevationDeg}°
             </dd>
           </div>
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Horizon Mask</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Crater Wall Height</dt>
             <dd className="text-white/70">{earth.horizonMaskDeg > 0 ? "+" : ""}{earth.horizonMaskDeg}°</dd>
           </div>
           <div>
-            <dt className="text-[10px] text-white/50 uppercase">Clearance Margin</dt>
+            <dt className="text-[10px] text-white/50 uppercase">Safety Clearance</dt>
             <dd
               className={
                 earth.marginDeg > 0.25
@@ -423,9 +427,9 @@ export function TelemetryPanel({
         {/* Visual Earth Horizon Clearance Gauge */}
         <div className="mt-2.5 pt-2 border-t border-sky-500/20">
           <div className="flex justify-between font-mono text-[9px] text-sky-200/80 mb-1">
-            <span>Terrain Mask: {earth.horizonMaskDeg > 0 ? "+" : ""}{earth.horizonMaskDeg}°</span>
+            <span>Rim Height: {earth.horizonMaskDeg > 0 ? "+" : ""}{earth.horizonMaskDeg}°</span>
             <span className={earth.visibility === "CLEAR" ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>
-              {earth.visibility === "CLEAR" ? `▲ ${earth.marginDeg > 0 ? "+" : ""}${earth.marginDeg}° Clear` : `▼ ${earth.marginDeg}° Blocked`}
+              {earth.visibility === "CLEAR" ? `▲ ${earth.marginDeg > 0 ? "+" : ""}${earth.marginDeg}° (Earth Above Rim)` : `▼ ${earth.marginDeg}° (Behind Rim)`}
             </span>
           </div>
           <div className="relative h-2 w-full rounded-xs bg-black/90 overflow-hidden flex border border-white/20">
@@ -437,10 +441,10 @@ export function TelemetryPanel({
             />
           </div>
           <div className="relative mt-1 flex justify-between font-mono text-[8px] text-white/50">
-            <span>-2°</span>
-            <span>0° Datum</span>
+            <span>-2° Horizon</span>
+            <span>0° Level</span>
             <span>+4°</span>
-            <span>+8°</span>
+            <span>+8° High</span>
             {/* Earth position marker */}
             <span
               className="absolute -top-3.5 -translate-x-1/2 text-xs"
