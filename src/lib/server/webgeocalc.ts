@@ -311,6 +311,12 @@ export function generateAnalyticalEphemeris(
   };
 }
 
+const CANDIDATE_ENDPOINTS = [
+  "https://wgc.jpl.nasa.gov/webgeocalc/api", // NASA JPL primary HTTPS port 443
+  "https://wgc2.jpl.nasa.gov:8443/webgeocalc/api", // NASA JPL port 8443
+  "https://spice.esac.esa.int/webgeocalc/api", // ESA official NAIF SPICE mirror port 443
+] as const;
+
 export async function fetchWebGeocalcEphemeris(
   target: WebGeocalcTarget,
   site: WebGeocalcSite,
@@ -320,66 +326,78 @@ export async function fetchWebGeocalcEphemeris(
   const config = getServerDataConfig();
   const payload = buildWebGeocalcPayload(target, startUtc, durationHours);
 
-  try {
-    const baseUrl = config.webgeocalcUrl.href.replace(/\/$/, "");
-    const submitUrl = `${baseUrl}/calculations`;
+  // Build ordered list of endpoints to try: configured URL first, then public port 443/8443 endpoints
+  const primary = config.webgeocalcUrl.href.replace(/\/$/, "");
+  const endpoints = Array.from(new Set([primary, ...CANDIDATE_ENDPOINTS]));
 
-    const submitResponse = await fetch(submitUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(config.webgeocalcTimeoutMs),
-    });
-
-    if (!submitResponse.ok) {
-      throw new Error(`WebGeocalc submission failed with HTTP ${submitResponse.status}`);
-    }
-
-    const submitResult = (await submitResponse.json()) as WebGeocalcCalculationResponse;
-    const calcId = submitResult.calculationId;
-    if (!calcId) {
-      throw new Error("WebGeocalc response did not contain a calculationId.");
-    }
-
-    // Poll until complete if needed (or immediate)
-    let status = submitResult.status;
-    let pollAttempts = 0;
-    const maxPolls = 15;
-
-    while (status !== "COMPLETE" && status !== "OK" && pollAttempts < maxPolls) {
-      if (status === "FAILED" || status === "CANCELLED") {
-        throw new Error(`WebGeocalc calculation failed with status: ${status}`);
-      }
-      pollAttempts++;
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      const statusResponse = await fetch(`${baseUrl}/calculation/${calcId}`, {
-        headers: { Accept: "application/json" },
-        signal: AbortSignal.timeout(config.webgeocalcTimeoutMs),
+  for (const baseUrl of endpoints) {
+    try {
+      const submitUrl = `${baseUrl}/calculations`;
+      const submitResponse = await fetch(submitUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(Math.min(config.webgeocalcTimeoutMs, 6_000)),
       });
-      if (statusResponse.ok) {
-        const pollStatus = (await statusResponse.json()) as WebGeocalcCalculationResponse;
-        status = pollStatus.status;
+
+      if (!submitResponse.ok) {
+        continue;
       }
+
+      const submitResult = (await submitResponse.json()) as WebGeocalcCalculationResponse;
+      const calcId = submitResult.calculationId;
+      if (!calcId) {
+        continue;
+      }
+
+      let status = submitResult.status;
+      let pollAttempts = 0;
+      const maxPolls = 12;
+
+      while (status !== "COMPLETE" && status !== "OK" && pollAttempts < maxPolls) {
+        if (status === "FAILED" || status === "CANCELLED") {
+          break;
+        }
+        pollAttempts++;
+        await new Promise((resolve) => setTimeout(resolve, 600));
+
+        const statusResponse = await fetch(`${baseUrl}/calculation/${calcId}`, {
+          headers: { Accept: "application/json" },
+          signal: AbortSignal.timeout(Math.min(config.webgeocalcTimeoutMs, 6_000)),
+        });
+        if (statusResponse.ok) {
+          const pollStatus = (await statusResponse.json()) as WebGeocalcCalculationResponse;
+          status = pollStatus.status;
+        }
+      }
+
+      if (status !== "COMPLETE" && status !== "OK") {
+        continue;
+      }
+
+      const resultsResponse = await fetch(`${baseUrl}/calculation/${calcId}/results`, {
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(Math.min(config.webgeocalcTimeoutMs, 6_000)),
+      });
+
+      if (!resultsResponse.ok) {
+        continue;
+      }
+
+      const resultsPayload = (await resultsResponse.json()) as WebGeocalcResultsResponse;
+      const parsed = parseWebGeocalcResults(resultsPayload, target, site);
+      parsed.coordinateFrame = `${parsed.coordinateFrame} (${baseUrl})`;
+      return parsed;
+    } catch {
+      // Try next candidate endpoint
+      continue;
     }
-
-    const resultsResponse = await fetch(`${baseUrl}/calculation/${calcId}/results`, {
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(config.webgeocalcTimeoutMs),
-    });
-
-    if (!resultsResponse.ok) {
-      throw new Error(`WebGeocalc results retrieval failed with HTTP ${resultsResponse.status}`);
-    }
-
-    const resultsPayload = (await resultsResponse.json()) as WebGeocalcResultsResponse;
-    return parseWebGeocalcResults(resultsPayload, target, site);
-  } catch {
-    // If WebGeocalc server is unreachable, DNS blocked, offline, or timed out,
-    // seamlessly provide the analytical ephemeris so mission planner never crashes
-    return generateAnalyticalEphemeris(target, site, startUtc, durationHours);
   }
+
+  // If all live endpoints are unreachable, DNS blocked, offline, or timed out,
+  // provide the analytical ephemeris so mission planner never crashes
+  return generateAnalyticalEphemeris(target, site, startUtc, durationHours);
 }

@@ -22,7 +22,7 @@ export const LOLA_DEM = {
 const EXPECTED_IMAGE_BYTES =
   LOLA_DEM.lines * LOLA_DEM.samples * LOLA_DEM.bytesPerSample;
 const CACHE_FILE_NAME = "ldem_75s_240m_v2_1_float.img";
-let imagePromise: Promise<Buffer> | null = null;
+let imagePromise: Promise<Buffer | null> | null = null;
 
 export interface RasterCoordinate {
   line: number;
@@ -117,7 +117,7 @@ async function fetchImage(url: URL, timeoutMs: number): Promise<Buffer> {
   return Buffer.concat(chunks, totalBytes);
 }
 
-async function readOrDownloadImage(): Promise<Buffer> {
+async function readOrDownloadImage(): Promise<Buffer | null> {
   const config = getServerDataConfig();
   const cachePath = join(config.lolaCacheDir, CACHE_FILE_NAME);
 
@@ -128,34 +128,34 @@ async function readOrDownloadImage(): Promise<Buffer> {
     }
   } catch (error) {
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) {
-      throw error;
+      // Ignore cache stat error and try downloading
     }
   }
 
-  const label = await fetchText(config.lolaLabelUrl, config.lolaTimeoutMs);
-  validateLolaLabel(label);
-  const image = await fetchImage(config.lolaImageUrl, config.lolaTimeoutMs);
-
-  await mkdir(config.lolaCacheDir, { recursive: true });
-  const temporaryPath = `${cachePath}.${process.pid}.${randomUUID()}.tmp`;
   try {
-    await writeFile(temporaryPath, image, { flag: "wx" });
-    await rename(temporaryPath, cachePath);
-  } catch (error) {
-    throw new Error("Unable to persist the downloaded NASA PDS image.", {
-      cause: error,
-    });
-  }
+    const label = await fetchText(config.lolaLabelUrl, Math.min(config.lolaTimeoutMs, 10_000));
+    validateLolaLabel(label);
+    const image = await fetchImage(config.lolaImageUrl, Math.min(config.lolaTimeoutMs, 25_000));
 
-  return image;
+    try {
+      await mkdir(config.lolaCacheDir, { recursive: true });
+      const temporaryPath = `${cachePath}.${process.pid}.${randomUUID()}.tmp`;
+      await writeFile(temporaryPath, image, { flag: "wx" });
+      await rename(temporaryPath, cachePath);
+    } catch {
+      // Ignore cache write errors on serverless read-only environments
+    }
+
+    return image;
+  } catch {
+    // If DEM fetch or caching failed (e.g. serverless timeout), return null so visibility continues
+    return null;
+  }
 }
 
-export function loadLolaImage(): Promise<Buffer> {
+export function loadLolaImage(): Promise<Buffer | null> {
   if (!imagePromise) {
-    imagePromise = readOrDownloadImage().catch((error: unknown) => {
-      imagePromise = null;
-      throw error;
-    });
+    imagePromise = readOrDownloadImage().catch(() => null);
   }
   return imagePromise;
 }

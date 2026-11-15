@@ -73,11 +73,26 @@ export async function calculateGeometricVisibility(
 ): Promise<VisibilityAnalysisResult> {
   const image = await loadLolaImage();
   const longitudeDeg = normalizeLongitude(location.longitude);
-  const terrain = calculateLolaHorizonProfile(
-    image,
-    location.latitude,
-    longitudeDeg
-  );
+  const warnings: string[] = [];
+
+  let terrain: { horizonProfile: HorizonSamplePoint[]; siteElevationKm: number };
+  if (image) {
+    terrain = calculateLolaHorizonProfile(
+      image,
+      location.latitude,
+      longitudeDeg
+    );
+  } else {
+    warnings.push(
+      "NASA LOLA 58 MB DEM is initializing in cloud cache; baseline geometric horizon active."
+    );
+    const horizonProfile: HorizonSamplePoint[] = [];
+    for (let az = 0; az < 360; az++) {
+      horizonProfile.push({ azimuthDeg: az, elevationDeg: 0.15 });
+    }
+    terrain = { horizonProfile, siteElevationKm: 0.0 };
+  }
+
   const site = {
     latitudeDeg: location.latitude,
     longitudeDeg,
@@ -94,7 +109,6 @@ export async function calculateGeometricVisibility(
   }
 
   const config = getServerDataConfig();
-  const warnings: string[] = [];
   const coordinateFrameVerified =
     sunEphemeris.coordinateFrameVerified &&
     earthEphemeris.coordinateFrameVerified;

@@ -56,12 +56,26 @@ function readTimeout(name: string, fallback: number): number {
 }
 
 function readCacheDir(): string {
-  const value = process.env.NASA_LOLA_CACHE_DIR ?? DEFAULTS.lolaCacheDir;
-  if (value.trim() === "") {
-    throw new Error("NASA_LOLA_CACHE_DIR must not be empty.");
+  const custom = process.env.NASA_LOLA_CACHE_DIR;
+  if (custom !== undefined) {
+    if (custom.trim() === "") {
+      throw new Error("NASA_LOLA_CACHE_DIR must not be empty.");
+    }
+    return resolve(process.cwd(), custom);
   }
 
-  return resolve(process.cwd(), value);
+  // Detect serverless environment (Vercel, AWS Lambda, Netlify)
+  if (
+    process.env.VERCEL === "1" ||
+    process.env.VERCEL === "true" ||
+    Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
+    Boolean(process.env.NETLIFY)
+  ) {
+    const tmp = process.env.TMPDIR || "/tmp";
+    return resolve(tmp, "lunar-dem");
+  }
+
+  return resolve(process.cwd(), DEFAULTS.lolaCacheDir);
 }
 
 export function getServerDataConfig(): ServerDataConfig {
