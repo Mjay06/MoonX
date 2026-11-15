@@ -127,9 +127,18 @@ export function parseHorizonsResponse(
       throw new Error(`JPL Horizons returned a malformed ephemeris row: ${line.trim()}`);
     }
     const timestampUtc = parseUtcTimestamp(columns[0], columns[1]);
-    const [azimuthDeg, elevationDeg, distanceKm] = columns
-      .slice(2, 5)
-      .map(Number);
+
+    // NASA JPL Horizons may output an illumination/solar presence flag
+    // (* for daylight / Sun above horizon, m for moonlight, A/C/N for twilight, etc.)
+    // between the time column and the azimuth column. Skip non-numeric flags.
+    let colIdx = 2;
+    if (isNaN(Number(columns[colIdx]))) {
+      colIdx++;
+    }
+
+    const azimuthDeg = Number(columns[colIdx]);
+    const elevationDeg = Number(columns[colIdx + 1]);
+    const distanceKm = Number(columns[colIdx + 2]);
     if (
       ![azimuthDeg, elevationDeg, distanceKm].every(Number.isFinite) ||
       distanceKm <= 0 ||

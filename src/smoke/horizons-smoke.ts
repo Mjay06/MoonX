@@ -20,6 +20,16 @@ assert.equal(sun.observations[0].elevationDeg, 4.5);
 assert.ok(Math.abs(sun.observations[0].apparentDiameterDeg - 0.533) < 0.01);
 assert.equal(sun.coordinateFrameVerified, true);
 
+// Test real NASA JPL Horizons output line with solar presence flag (*)
+const realNasaLine = response.replace(
+  " 2026-Nov-15 00:00  123.000  4.500  149597870.0  0.1",
+  " 2026-Nov-15 00:00 * 114.433749 1.514991 1.4781418163E+08 0.3960979"
+);
+const realSun = parseHorizonsResponse("10", realNasaLine);
+assert.equal(realSun.observations[0].azimuthDeg, 114.433749);
+assert.equal(realSun.observations[0].elevationDeg, 1.514991);
+assert.equal(realSun.observations[0].distanceKm, 147814181.63);
+
 const earth = parseHorizonsResponse(
   "399",
   response
