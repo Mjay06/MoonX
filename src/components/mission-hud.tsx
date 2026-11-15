@@ -8,7 +8,6 @@ import {
   VisibilityAnalysisResult,
 } from "@/types/mission";
 import { SAMPLE_LUNAR_SITES } from "@/data/sample-sites";
-import { createFallbackVisibilityResult } from "@/lib/sample-telemetry";
 import { SiteSearchPanel } from "./site-search-panel";
 import { CandidateComparisonBar } from "./candidate-comparison-bar";
 import { TimeScrubberPanel } from "./time-scrubber-panel";
@@ -197,18 +196,15 @@ export function MissionHud() {
           status: "ready",
           result: payload,
         });
-      } catch {
+      } catch (error) {
         if (controller.signal.aborted) return;
-        // Resilient fallback to analytical topocentric ephemeris if visibility service is offline
-        const fallback = createFallbackVisibilityResult(
-          location,
-          MISSION_BASE_TIME_UTC,
-          MISSION_DURATION_HOURS
-        );
         setVisibilityLoad({
           locationId: location.id,
-          status: "ready",
-          result: fallback,
+          status: "error",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Visibility could not be calculated from the configured NASA data sources.",
         });
       }
     }

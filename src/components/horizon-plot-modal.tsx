@@ -484,7 +484,7 @@ export function HorizonPlotModal({
 
         <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
           <p className="text-[10px] text-white/50">
-            LOLA elevations are sampled every 240 m. NASA NAIF SPICE frame alignment is verified against the MOON_ME datum; geometric visibility is not a power or link estimate.
+            LOLA elevations are sampled every 240 m. JPL Horizons provides the ephemeris; its site-coordinate datum alignment with LOLA remains provisional. Geometric visibility is not a power or link estimate.
           </p>
           <Button variant="outline" size="sm" onClick={onClose} className="h-7 px-3 text-xs border-white/20 text-white hover:border-[#00e5ff] hover:text-[#00e5ff]">
             Close

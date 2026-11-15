@@ -175,67 +175,6 @@ export function parseHorizonsResponse(
   };
 }
 
-export function generateAnalyticalEphemeris(
-  target: HorizonsTarget,
-  site: HorizonsSite,
-  startUtc: Date,
-  durationHours: number
-): HorizonsEphemeris {
-  const observations: HorizonsObservation[] = [];
-  const expectedSamples = durationHours * 2 + 1;
-  const isSun = target === "10";
-  const targetRadiusKm = isSun ? SUN_RADIUS_KM : EARTH_RADIUS_KM;
-
-  for (let i = 0; i < expectedSamples; i++) {
-    const h = i * 0.5;
-    const curTime = new Date(startUtc.getTime() + h * 3600 * 1000);
-    const timestampUtc = curTime.toISOString().replace(".000Z", "Z");
-
-    let azimuthDeg = 0;
-    let elevationDeg = 0;
-    let distanceKm = 0;
-
-    if (isSun) {
-      const az = (site.longitudeDeg + 180 + h * 0.508) % 360;
-      azimuthDeg = Number((az < 0 ? az + 360 : az).toFixed(3));
-      const elev = 1.54 * Math.sin(((h + 24) * Math.PI) / 354.3) + 0.15;
-      elevationDeg = Number(elev.toFixed(3));
-      distanceKm = 149597870.0;
-    } else {
-      const az = (site.longitudeDeg + 40 + Math.sin(h * 0.05) * 3) % 360;
-      azimuthDeg = Number((az < 0 ? az + 360 : az).toFixed(3));
-      const baseElev = Math.max(0.5, (90 - Math.abs(site.latitudeDeg)) * 0.5 + 4.5);
-      const elev = baseElev + Math.cos(h * 0.05) * 2.5;
-      elevationDeg = Number(elev.toFixed(3));
-      distanceKm = 384400.0;
-    }
-
-    const apparentDiameterDeg = Number(
-      ((2 * Math.asin(Math.min(1, targetRadiusKm / distanceKm))) / DEG_TO_RAD).toFixed(4)
-    );
-
-    observations.push({
-      timestampUtc,
-      azimuthDeg,
-      elevationDeg,
-      distanceKm,
-      apparentDiameterDeg,
-    });
-  }
-
-  return {
-    target,
-    observations,
-    centerPoleAndEquator: "MEAN EARTH/DE421 (Analytical Approximation)",
-    centerRadiiKm: [
-      REFERENCE_MOON_RADIUS_KM,
-      REFERENCE_MOON_RADIUS_KM,
-      REFERENCE_MOON_RADIUS_KM,
-    ],
-    coordinateFrameVerified: true,
-  };
-}
-
 export async function fetchHorizonsEphemeris(
   target: HorizonsTarget,
   site: HorizonsSite,
@@ -266,41 +205,35 @@ export async function fetchHorizonsEphemeris(
   };
   url.search = new URLSearchParams(parameters).toString();
 
-  try {
-    const response = await fetch(url, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(config.horizonsTimeoutMs),
-      headers: { Accept: "application/json" },
-    });
-    if (!response.ok) {
-      throw new Error(`JPL Horizons request failed with HTTP ${response.status}.`);
-    }
-
-    let payload: HorizonsApiResponse;
-    try {
-      payload = (await response.json()) as HorizonsApiResponse;
-    } catch (error) {
-      throw new Error("JPL Horizons returned invalid JSON.", { cause: error });
-    }
-    if (payload.error) {
-      throw new Error(`JPL Horizons rejected the ephemeris request: ${payload.error}`);
-    }
-    if (typeof payload.result !== "string") {
-      throw new Error("JPL Horizons response did not include an ephemeris result.");
-    }
-
-    const ephemeris = parseHorizonsResponse(target, payload.result);
-    const expectedSamples = durationHours * 2 + 1;
-    if (ephemeris.observations.length !== expectedSamples) {
-      throw new Error(
-        `JPL Horizons returned ${ephemeris.observations.length} samples; expected ${expectedSamples}.`
-      );
-    }
-
-    return ephemeris;
-  } catch {
-    // If external JPL Horizons is unreachable (e.g. offline, DNS failure, firewall, timeout),
-    // automatically fall back to analytical topocentric ephemeris to keep the system operational
-    return generateAnalyticalEphemeris(target, site, startUtc, durationHours);
+  const response = await fetch(url, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(config.horizonsTimeoutMs),
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) {
+    throw new Error(`JPL Horizons request failed with HTTP ${response.status}.`);
   }
+
+  let payload: HorizonsApiResponse;
+  try {
+    payload = (await response.json()) as HorizonsApiResponse;
+  } catch (error) {
+    throw new Error("JPL Horizons returned invalid JSON.", { cause: error });
+  }
+  if (payload.error) {
+    throw new Error(`JPL Horizons rejected the ephemeris request: ${payload.error}`);
+  }
+  if (typeof payload.result !== "string") {
+    throw new Error("JPL Horizons response did not include an ephemeris result.");
+  }
+
+  const ephemeris = parseHorizonsResponse(target, payload.result);
+  const expectedSamples = durationHours * 2 + 1;
+  if (ephemeris.observations.length !== expectedSamples) {
+    throw new Error(
+      `JPL Horizons returned ${ephemeris.observations.length} samples; expected ${expectedSamples}.`
+    );
+  }
+
+  return ephemeris;
 }

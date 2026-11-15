@@ -44,7 +44,7 @@ export interface SiteTelemetry {
   horizonProfile: HorizonSamplePoint[];
   coordinateSystem: string;
   isIllustrative: boolean;
-  ephemerisSource?: "live-spice" | "analytical-fallback" | "illustrative";
+  ephemerisSource?: "live-horizons" | "live-spice" | "analytical-fallback" | "illustrative";
 }
 
 export type VisibilitySample = Omit<SiteTelemetry, "horizonProfile">;

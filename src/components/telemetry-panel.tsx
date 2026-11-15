@@ -255,9 +255,9 @@ export function TelemetryPanel({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {telemetry.ephemerisSource === "live-spice" ? (
+          {telemetry.ephemerisSource === "live-horizons" ? (
             <Badge variant="outline" className="border-emerald-500/50 bg-emerald-950/40 text-emerald-300 text-[10px]">
-              ● LIVE NASA SPICE
+              ● LIVE JPL HORIZONS
             </Badge>
           ) : telemetry.ephemerisSource === "analytical-fallback" ? (
             <Badge variant="outline" className="border-amber-500/50 bg-amber-950/40 text-amber-300 text-[10px]">
@@ -542,7 +542,7 @@ export function TelemetryPanel({
               • <strong>Mast Height:</strong> +2.0 meters above lunar reference geoid.
             </p>
             <p>
-              • <strong>Data source:</strong> NASA NAIF WebGeocalc (SPICE Kernel Set 1) & LOLA DEM.
+              • <strong>Data source:</strong> JPL Horizons ephemerides & NASA LOLA DEM.
             </p>
           </div>
         )}

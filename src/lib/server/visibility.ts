@@ -6,16 +6,15 @@ import type {
   VisibilitySample,
   VisibilityStatus,
 } from "@/types/mission";
-import { getServerDataConfig } from "./config.ts";
 import { loadLolaImage } from "./lola-dem.ts";
 import {
   calculateLolaHorizonProfile,
   getHorizonElevationAt,
 } from "./lola-horizon.ts";
-import { fetchWebGeocalcEphemeris } from "./webgeocalc.ts";
+import { fetchHorizonsEphemeris } from "./horizons.ts";
 
-const SUN_TARGET = "SUN";
-const EARTH_TARGET = "EARTH";
+const SUN_TARGET = "10";
+const EARTH_TARGET = "399";
 
 function normalizeLongitude(longitudeDeg: number): number {
   return ((longitudeDeg % 360) + 360) % 360;
@@ -73,25 +72,19 @@ export async function calculateGeometricVisibility(
 ): Promise<VisibilityAnalysisResult> {
   const image = await loadLolaImage();
   const longitudeDeg = normalizeLongitude(location.longitude);
-  const warnings: string[] = [];
-
-  let terrain: { horizonProfile: HorizonSamplePoint[]; siteElevationKm: number };
-  if (image) {
-    terrain = calculateLolaHorizonProfile(
-      image,
-      location.latitude,
-      longitudeDeg
+  if (!image) {
+    throw new Error(
+      "NASA LOLA terrain data is unavailable; visibility cannot be calculated without it."
     );
-  } else {
-    warnings.push(
-      "NASA LOLA 58 MB DEM is initializing in cloud cache; baseline geometric horizon active."
-    );
-    const horizonProfile: HorizonSamplePoint[] = [];
-    for (let az = 0; az < 360; az++) {
-      horizonProfile.push({ azimuthDeg: az, elevationDeg: 0.15 });
-    }
-    terrain = { horizonProfile, siteElevationKm: 0.0 };
   }
+  const terrain = calculateLolaHorizonProfile(
+    image,
+    location.latitude,
+    longitudeDeg
+  );
+  const warnings: string[] = [
+    "Horizons GEODETIC site coordinates and altitude datum have not been independently validated against the LOLA planetocentric ME/PA of DE421 grid; visibility classifications are provisional.",
+  ];
 
   const site = {
     latitudeDeg: location.latitude,
@@ -99,31 +92,21 @@ export async function calculateGeometricVisibility(
     altitudeKm: terrain.siteElevationKm,
   };
   const [sunEphemeris, earthEphemeris] = await Promise.all([
-    fetchWebGeocalcEphemeris(SUN_TARGET, site, startUtc, durationHours),
-    fetchWebGeocalcEphemeris(EARTH_TARGET, site, startUtc, durationHours),
+    fetchHorizonsEphemeris(SUN_TARGET, site, startUtc, durationHours),
+    fetchHorizonsEphemeris(EARTH_TARGET, site, startUtc, durationHours),
   ]);
   if (
     sunEphemeris.observations.length !== earthEphemeris.observations.length
   ) {
-    throw new Error("NASA WebGeocalc returned different sample counts for Sun and Earth.");
+    throw new Error("JPL Horizons returned different sample counts for Sun and Earth.");
   }
 
-  const config = getServerDataConfig();
   const coordinateFrameVerified =
     sunEphemeris.coordinateFrameVerified &&
     earthEphemeris.coordinateFrameVerified;
   if (!coordinateFrameVerified) {
     warnings.push(
-      "NASA WebGeocalc lunar observer frame and altitude datum are not verified against the LOLA ME/PA of DE421 grid; visibility classifications are provisional."
-    );
-  }
-
-  const isFallback =
-    sunEphemeris.source === "analytical-fallback" ||
-    earthEphemeris.source === "analytical-fallback";
-  if (isFallback) {
-    warnings.push(
-      "NASA WebGeocalc API offline / unreachable. Celestial positions are generated via topocentric analytical simulation. Not certified for flight-critical trajectory decisions without verified SPICE kernels."
+      "JPL Horizons did not return frame metadata matching the LOLA ME/PA of DE421 grid."
     );
   }
 
@@ -131,7 +114,7 @@ export async function calculateGeometricVisibility(
     (sunObservation, index) => {
       const earthObservation = earthEphemeris.observations[index];
       if (sunObservation.timestampUtc !== earthObservation.timestampUtc) {
-        throw new Error("NASA WebGeocalc returned misaligned Sun and Earth timestamps.");
+        throw new Error("JPL Horizons returned misaligned Sun and Earth timestamps.");
       }
 
       const sun = toBodyTelemetry("Sun", sunObservation, terrain.horizonProfile);
@@ -149,10 +132,10 @@ export async function calculateGeometricVisibility(
         bothVisible:
           sun.visibility === "CLEAR" && earth.visibility === "CLEAR",
         coordinateSystem: coordinateFrameVerified
-          ? "NASA NAIF SPICE MOON_ME frame; aligned with LOLA DEM grid"
-          : "NASA NAIF SPICE frame unverified",
-        isIllustrative: isFallback,
-        ephemerisSource: isFallback ? "analytical-fallback" : "live-spice",
+          ? "JPL Horizons MEAN EARTH/DE421 frame; site datum alignment provisional"
+          : "JPL Horizons frame unverified",
+        isIllustrative: false,
+        ephemerisSource: "live-horizons",
       };
     }
   );
@@ -166,11 +149,8 @@ export async function calculateGeometricVisibility(
     provenance: {
       terrainProduct: "NASA LRO LOLA LDEM_75S_240M",
       terrainProductVersion: "V2.1",
-      ephemeris:
-        sunEphemeris.source === "live-spice"
-          ? `${config.webgeocalcUrl.origin} (NASA NAIF WebGeocalc SPICE Kernel Set 1)`
-          : "NASA NAIF SPICE Topocentric Model (Analytical High-Fidelity Fallback)",
-      timeScale: "NASA NAIF UTC calendar output; not lunar local time",
+      ephemeris: "JPL Horizons observer ephemerides (Sun 10, Earth 399)",
+      timeScale: "JPL Horizons Earth UT represented as UTC ISO timestamps; not lunar local time",
       terrainSamplingMeters: 240,
       horizonAzimuthStepDeg: 1,
     },
